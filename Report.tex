@@ -1,7 +1,16 @@
 \documentclass[12pt, a4paper]{report}
 \usepackage[italian]{babel}
 \usepackage[T1]{fontenc}
+\usepackage[sfdefault]{noto}
 \usepackage{graphicx}
+\usepackage{multirow}
+\usepackage{enumitem}
+\usepackage{hyperref}
+\hypersetup{pdfborder = 0 0 0 }
+\usepackage{wrapfig}
+\usepackage{color}
+\linespread{1.3}
+\textwidth=450pt\oddsidemargin=0pt
 \begin{document}
 \begin{titlepage}
 \vspace{15mm}
@@ -15,7 +24,7 @@
 \vspace{20mm}
 {\Large{\bf Software Architecture}}\\
 \vspace{10mm}
-{\Huge{\bf Personal Digital Assistants}}\\
+{\Huge{\bf Kubernetes}}\\
 \vspace{25mm}
 \end{center}
 \begin{flushright}
@@ -23,4 +32,21 @@
 \end{flushright}
 \end{titlepage}
 \tableofcontents
+\chapter{Descrizione del sistema}
+\begin{center}
+  \includegraphics[scale = 0.9]{Images/kubernetesLogo}
+\end{center}
+Kubernetes è un sistema open source per la gestione di applicazioni containerizzate tra più host; fornisce un meccanismo per il deployment, la manutenzione e lo scaling di applicazioni. È stato inizialmente sviluppato dal team di Google, per poi passare nel 2015 sotto il controllo del \textit{Cloud Native Computing Foundation (CNCF)}, che attualmente lo supporta.\\ Al giorno d'oggi è uno dei sistemi di orchestrazione per applicazioni conteinerizzate più utilizzato in assoluto, con una vastità di utenti, partners e una comunità di development attiva. Non a caso tre dei quattro maggior providers di servizi Cloud - Microsoft, IBM e Google - offrono piattaforme di Container as a Service (CaaS) basate su Kubernetes. I servizi che Kubernetes mette a disposizione sono molteplici: fornisce un ambiente la gestione di container, microservizi e piattaforme cloud. Inoltre organizza l'infrastruttura di rete e di archiviazione per conto dell'utente.\\
+In generale un sistema distribuito necessita di più componenti per il corretto funzionamento, alcune open source e altre commerciali; invece Kubernetes da solo fornisce uno scenario in cui le componenti lavorano insieme, andando così a formare un unico componente combinando la semplicità del Platform as a Service (PaaS) con la flessibilità dell'Infrastructure as a Service (IaaS).\\
+L'orchestrazione di container ha avuto un profondo impatto in ogni aspetto del software development e deployment moderno; in particolare ha influenzato l'architettura del Platform as a Service, fornendo un aperto ed efficiente modello per il packaging, deployment, isolamento, scaling e rolling upgrade. Kubernetes svolgerà un ruolo cruciale nell'utilizzo di container da parte di imprese e start-up emergenti.
+\\L'oggetto di questo report è di studiare tutto ciò che riguarda e circonda l'architettura di Kubernetes.
+\chapter{Contesto}
+\chapter{Drivers architetturali}
+\chapter{Struttura}
+\chapter{Funzioni}
+\chapter{Comportamento}
+\chapter{Razionale}
+\chapter{Aspetti analitici}
+\chapter{Stili architetturali simili o derivati}
+\chapter{Referenze}
 \end{document}
