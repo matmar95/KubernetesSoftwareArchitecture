@@ -9,6 +9,8 @@
 \hypersetup{pdfborder = 0 0 0 }
 \usepackage{wrapfig}
 \usepackage{color}
+\usepackage{tabularx}
+\usepackage{makecell}
 \linespread{1.3}
 \textwidth=450pt\oddsidemargin=0pt
 \begin{document}
@@ -65,8 +67,82 @@ Le entità di maggior rilievo all'interno del diagramma e che verranno analizzat
 Per poter comprendere al meglio il concetto di stakeholder all'interno di un progetto così grande come quello di Kubernetes, è necessario introdurre il \textbf{Cloud Native Computing Foundation} (CNCF).\\
 CNCF è nato nel 2015 da un accordo tra Google e la Linux Foundation con l'annuncio di Kubernetes 1.0, considerato il progetto principale. Da li in poi molte industrie del cloud computing si sono unite a CNCF per incubare, sviluppare e mantenere un ecosistema di progetti cloud sotto una visione comune e condivisa. I membri di CNCF sono divisi per categorie, quali Platinum, Gold, Silver, End-User, accademici e no-profit. Tra i membri Platinum abbiamo Google, Docker, IBM, Cisco e Oracle.\\
 Oltre all'organizzazione CNCF, Kubernetes attrae migliaia di contributori che coordinano i loro sforzi attraverso piattaforme online, quali GitHub, Slack e StackOverflow (fornitori). Gli Special Interest Groups (SIG) si occupano dello sviluppo di Kubernetes, in particolare dell'architettura, del product management e del testing, nonchè di implementazione specifiche per fornitori di servizi come AWS e Azure.
+\subsubsection{Griglia Power/Interest}
+Nella seguente immagine è raffigurata la griglia o matrice \textit{power/interest} che divide gli stakeholders in quattro categorie:
+\begin{itemize}
+  \item \textbf{Alta potenza e alto interesse}: la massima potenza suoi progetti di Kubernetes la detiene il consiglio d'amministrazione di CNCF che ne gestisce il budget, seguito poi da CNCF TOC (Technical Oversight Committee), che ha il compito di aggiungere e rimuovere progetti come Kubernetes. Inoltre anche l'architettura SIG è fondamentale in quanto decide il futuro del progetto.
+  \item \textbf{Alta potenza e basso interesse}: il CNCF Marketing Committee, derivato dal consiglio di amministrazione di CNCF, cura il brand del progetto e altre attività legate al business.
+  \item \textbf{Bassa potenza e alto interesse}: rispetto agli stakeholder con grande potere su Kubernetes, il CNCF end user TAB, lo staff di provider di piattaforme/servizi, Test SIG e la comunità di sviluppatori generali di Kubernetes dipendono dal continuo sviluppo del progetto, e questo comporta un alto interesse.
+  \item \textbf{Bassa potenza e basso interesse}: le piattaforme di coordinamento, quali GitHub, hanno scarso potere ed interesse per il progetto, in quanto altre piattaforme potrebbero avere uno scopo simile se non fossero prese in considerazione.
+\end{itemize}
+\begin{center}
+  \includegraphics[scale = 0.45]{Images/power-interest}
+\end{center}
 \subsection{Development}
+Il principale linguaggio con cui Kubernetes è sviluppato è \textbf{Go}, un linguaggio open-source progettato da tre ingegneri di Google, ma nonostante ciò possiede dipendenze da varie librerie esterne, quali Amazon Web Services SDK (AWS), Docker API, Azure SDK,  Container Network Interface (CNI), e Gophercloud. Inoltre Kubernetes si affida a Jenkins per la Continuous Integration.
 \subsection{Piattaforme}
+Kubernetes essendo una piattaforma cloud è compatibile con diverci providers a seconda delle necessità e dell'utilizzo. Di seguito sono riportate alcune soluzioni differenti a seconda del pattern di utilizzo.
+\subsubsection{Container Management, soluzioni in locale e PaaS}
+\begin{table}[ht]
+  \small
+  \begin{center}
+  \begin{tabularx}{\textwidth}{|lr|}
+    \hline
+    \textbf{Prodotto} (compagnia) & \textbf{Categoria}\\
+    \hline
+    \textbf{AppsCode} (AppsCode)&Hosted, PaaS\\
+    \multicolumn{2}{|X|}{\textit{È una piattaforma integrata per il deployment, testing e coding di app containerizzate. Permette il deployment su Google Cloud Platform e AWS.}}\\
+    \hline
+    \textbf{Cloud Container Engine} (Huawei)&CaaS\\
+    \multicolumn{2}{|X|}{\textit{Servizio di containerizzazione scalabile ad alte prestazioni basato su Kubernetes}}\\
+    \hline
+    \textbf{Giant Swarm} (Giant Swarm)&Hosted, on-premises\\
+    \multicolumn{2}{|X|}{\textit{Una soluzione creare, distribuire e gestire servizi containerizzati con Kubernetes come componente principale}}\\
+    \hline
+    \textbf{Google Container Engine} (Google)&CaaS\\
+    \multicolumn{2}{|X|}{\textit{Google Container Engine è un sistema di gestione e orchestrazione dei cluster che consente agli utenti di eseguire container sulla piattaforma Cloud di Google}}\\
+    \hline
+    \textbf{OpenShift Container Platform} (RedHat)&PaaS, on-premises\\
+    \multicolumn{2}{|X|}{\textit{Una piattaforma di applicazioni per container che può estendersi su più infrastrutture. È costruito usando la tecnologia Docker e Kubernetes.}}\\
+    \hline
+  \end{tabularx}
+  \end{center}
+\end{table}
+
+\begin{table}[ht]
+  \small
+  \begin{center}
+  \begin{tabularx}{\textwidth}{|lr|}
+  \hline
+  \textbf{OpenShift Online} (RedHat)&Hosted\\
+  \multicolumn{2}{|X|}{\textit{Versione hosted di OpenShift. Il funzionamento è il medesimo a quello di OpenShift Container Platform}}\\
+  \hline
+  \textbf{Platform9 Managed Kubernetes for Docker} (Platform9)&Hosted, on-premises\\
+  \multicolumn{2}{|X|}{\textit{I clienti possono utilizzare il singolo pannello di Platform9 per 􏰅orchestrare e gestire i container insieme alle macchine virtuali. In altre parole, è possibile orchestrare le VM's usando OpenStack e/o Kubernetes}}\\
+  \hline
+  \end{tabularx}
+  \end{center}
+\end{table}
+\subsubsection{Tools per deployment e controllo di clusters Kubernetes}
+\begin{table}[ht]
+\small
+\begin{center}
+\begin{tabularx}{\textwidth}{|lr|}
+\hline
+\textbf{Prodotto} (compagnia) & \textbf{Categoria}\\
+\hline
+\textbf{AppFormix} (AppFormix)&Monitoring\\
+\multicolumn{2}{|X|}{\textit{Fornisce metriche e analisi per i container organizzati con l'architettura di Kubernetes. Gli utenti possono vedere analisi e gestire avvisi, o regole di orchestrazione per singoli pods o container. La dashboard può essere ulteriormente personalizzata e mappata nei propri progetti}}\\
+\hline
+\textbf{Bootkube} (CoreOS)&Deploy\\
+\multicolumn{2}{|X|}{\textit{Uno strumento di supporto per l'avvio di cluster Kubernetes autogestiti.}}\\
+\hline
+\textbf{ElasticBox ElasticKube} (CenturyLink)&Deploy\\
+\multicolumn{2}{|X|}{\textit{Uno strumento di supporto per l'avvio di cluster Kubernetes autogestiti.}}\\
+\hline
+\end{tabularx}
+\end{center}
+\end{table}
 \subsection{Concorrenti}
 \chapter{Drivers architetturali}
 \chapter{Struttura}
