@@ -1,4 +1,5 @@
 \documentclass[12pt, a4paper]{report}
+\usepackage[utf8]{inputenc}
 \usepackage[italian]{babel}
 \usepackage[T1]{fontenc}
 \usepackage[sfdefault]{noto}
@@ -118,7 +119,7 @@ Kubernetes essendo una piattaforma cloud è compatibile con diverci providers a 
 \multicolumn{2}{|X|}{\textit{Versione hosted di OpenShift. Il funzionamento è il medesimo a quello di OpenShift Container Platform}}\\
 \hline
 \textbf{Platform9 Managed Kubernetes for Docker} (Platform9)&Hosted, on-premises\\
-\multicolumn{2}{|X|}{\textit{I clienti possono utilizzare il singolo pannello di Platform9 per 􏰅orchestrare e gestire i container insieme alle macchine virtuali. In altre parole, è possibile orchestrare le VM's usando OpenStack e/o Kubernetes}}\\
+\multicolumn{2}{|X|}{\textit{I clienti possono utilizzare il singolo pannello di Platform 9 per orchestrare e gestire i container insieme alle macchine virtuali. In pratica, è possibile orchestrare le VM utilizzando OpenStack e/o Kubernetes}}\\
 \hline
 \end{tabularx}
 \end{table}
@@ -132,22 +133,23 @@ Kubernetes essendo una piattaforma cloud è compatibile con diverci providers a 
 \textbf{Prodotto} (compagnia) & \textbf{Categoria}\\
 \hline
 \textbf{AppFormix} (AppFormix)&Monitoring\\
-\multicolumn{2}{|X|}{\textit{Fornisce metriche e analisi per i container organizzati con l'architettura di Kubernetes. Gli utenti possono vedere analisi e gestire avvisi, o regole di orchestrazione per singoli pods o container. La dashboard può essere ulteriormente personalizzata e mappata nei propri progetti}}\\
+\multicolumn{2}{|X|}{\textit{Fornisce metriche e analisi per i container. Gli utenti possono gestire avvisi, o regole di orchestrazione per singoli pods o container. La dashboard può essere ulteriormente personalizzata e mappata nei propri progetti}}\\
 \hline
 \textbf{Bootkube} (CoreOS)&Deploy\\
 \multicolumn{2}{|X|}{\textit{Uno strumento di supporto per l'avvio di cluster Kubernetes autogestiti.}}\\
 \hline
 \textbf{ElasticBox ElasticKube} (CenturyLink)&Deploy\\
-\multicolumn{2}{|X|}{\textit{Un servizio per connettere pipeline di CI/CD, per la configurazione di tools di management e per il deployment di applicazioni cloud. Inoltre include ElasticKube, una piattaforma open source per Kubernetes che promuove il self-service per le applicazioni containerizzate.}}\\
+\multicolumn{2}{|X|}{\textit{Un servizio per pipeline di CI/CD, per la configurazione di tools di management e per il deployment di applicazioni cloud. Include ElasticKube, una piattaforma open source per Kubernetes che promuove il self-service per le applicazioni containerizzate.}}\\
 \hline
 \textbf{Kubernetes Dashboard} (Cloud Native Computing Foundation)&Monitor\\
 \multicolumn{2}{|X|}{\textit{Fornisce un'interfaccia utente basata sul Web per cluster Kubernetes. Consente agli utenti di gestire le applicazioni in esecuzione nel cluster nonché di gestire il cluster stesso.}}\\
 \hline
 \textbf{Minikube} (Cloud Native Computing Foundation)&Deploy\\
-\multicolumn{2}{|X|}{\textit{Minikube è un tool che semplifica l'esecuzione in locale di Kubernetes. Minikube esegue un cluster Kubernetes a nodo singolo all'interno di una VM sul laptop. Orientato agli utenti che desiderano provare Kubernetes o svilupparlo giorno per giorno.}}\\
+\multicolumn{2}{|X|}{\textit{Minikube è un tool che permette di eseguie in locale Kubernetes, semplicemente eseguendolo all'interno di una VM del proprio pc. }}\\
 \hline
 \end{tabularx}
 \end{table}
+
 \subsection{Concorrenti}
 \chapter{Drivers architetturali}
 \chapter{Struttura}
