@@ -30,9 +30,9 @@
 {\Huge{\bf Kubernetes}}\\
 \vspace{25mm}
 \end{center}
-\begin{flushright}
+\begin{center}
 {\large{Matteo Marchesini\\0000856336\\matteo.marchesini12@studio.unibo.it}}
-\end{flushright}
+\end{center}
 \end{titlepage}
 \tableofcontents
 \chapter{Descrizione del sistema}
@@ -149,8 +149,37 @@ Kubernetes essendo una piattaforma cloud è compatibile con diverci providers a 
 \hline
 \end{tabularx}
 \end{table}
-
+\newpage
+\subsubsection{Tool per integration}
+\begin{table}[ht]
+\small
+\centering
+\begin{tabularx}{\textwidth}{|l|}
+\hline
+\textbf{Prodotto} (compagnia) \\
+\hline
+\textbf{Apprenda} (Apprenda)\\
+\multicolumn{1}{|X|}{\textit{Fornisce PaaS private per le aziende che supportano l'hosting di container}}\\
+\hline
+\textbf{Crunchy PostgreSQLContainer Suite} (Crunchy Data)\\
+\multicolumn{1}{|X|}{\textit{Un set di container Docker e servizi Kubernetes "preconfezionato"; il Crunchy Container Suite permette ai team di eseguire e gestire PostgreSQL su ambienti basati su Kubernetes}}\\
+\hline
+\textbf{fabric8} (Red Hat)\\
+\multicolumn{1}{|X|}{\textit{Una piattaforma open-source per il DevOps e integrazione costruita con un set di microservizi eseguiti su Kubernetes e OpenShift V3. La sua continuos delivery è basata su Jenkins, Nexus e SonarQube}}\\
+\hline
+\textbf{Kubeflix} (Red Hat)\\
+\multicolumn{1}{|X|}{\textit{Integrazione di Kubernetes con i componenti open source di Netflix, quali Hystrix, Turbine e Ribbon}}\\
+\hline
+\textbf{NetScaler CPX} (Citrix)\\
+\multicolumn{1}{|X|}{\textit{Sistema di bialnciamento della containerizzazione in Docker che può essere supportata on-premises o in ambienti multi-cloud. NetScaler CPX si integra con Kubernetes al fine di bilanciare applicazione containerizzate all'interno di cluster. Nell'ambiente di Kubernetes, NetScaler CPX rimpiazza kube-proxy nei minion e bilancia il carico nei pod. }}\\
+\hline
+\end{tabularx}
+\end{table}
 \subsection{Concorrenti}
+Tra i tool concorrenti a Kubernetes che offrono un servizio di orchestrazione di container abbiamo \textbf{Docker Swarm} e \textbf{Marathon}. Marathon è una piattaforma di orchestrazione di applicazioni e servizi per Apache Mesos.\\
+Docker Swarm invece, che è integrato in Docker come \textit{Swarm Mode}, è un orchestratore per i container Docker. Confrontando Docker Swarm con Kubernetes, emerge che quest'ultimo è un tool molto più efficiente, in quanto offre una maggiore scalabilità e automazione. Inoltre Kubernetes possiede delle proprie librerie per il monitoraggio e i logging; ciò viene a mancare in Docker Swarm, che deve ricorrere ad applicazioni di terze parti per sopperire a queste features.
+Kubernetes supera i vincoli imposti da Docker e Docker API per il deployment, e per questo è maggiormente utilizzato. In Kubernetes se un nodo fallisce, esso viene rimpiazzato così velocemente da non accorgersi, a meno che non si esegua una dettagliata risoluzione dei problemi.
+
 \chapter{Drivers architetturali}
 \chapter{Struttura}
 \chapter{Funzioni}
