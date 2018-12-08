@@ -12,6 +12,7 @@
 \usepackage{tabularx}
 \usepackage{makecell}
 \usepackage{fancyhdr}
+\usepackage[font=small,labelfont=bf]{caption}
 \linespread{1.3}
 \textwidth=450pt\oddsidemargin=0pt
 \begin{document}
@@ -185,12 +186,10 @@ Kubernetes, come si può capire dal capitolo precedente, è progettato secondo i
 Le applicazioni sono eseguite in Kubernetes come microservizi. Tali microservizi sono composti da più container raggruppati in \textbf{pods}. Ciascun container è progettato per eseguire solamente un unico task.\\
 I pods possono essere composti da container con o senza stato (stateless/stateful). I pods senza stato possono essere scalati facilmente quando necessario anche attraverso l'auto-scaling dinamico.\\
 Dalla versione 1.4 Kubernetes supporta l'auto-scaling orizzontale dei pod, che scala autmaticamente il numero di pod in repliche controllate basate sull'utilizzo della CPU. La versione di Kubernetes ospitata da Google Cloud supporta l'auto-scaling di cluster. Quando un nuovo pod viene scalato tra tutti i nodi disponibili, Kubernetes coordina l'infrastruttura sottostante per far si che ulteriori nodi vengano aggiunti al cluster. \\
-\begin{figure}
   \begin{center}
   \includegraphics[scale = 0.7]{Images/horizontal-pod-autoscaler}
-  \caption{Autoscaling orizzontale di un pod}
+  \captionof{figure}{Autoscaling orizzontale di un pod}
   \end{center}
-\end{figure}
 L'auto-scaling orizzontale è implementato come un loop di controllo, in cui periodicamente (con un valore predefinito di 30 secondi) il controller manager interroga l'utilizzo delle risorse rispetto alle metriche specificate in ciascuna definizione di \textit{HorizontalPodAutoscaler}.
 Nello specifico, il controller manager ottiene le metriche (ad esempio l'utilizzo di CPU) attraverso l'API apposita per le metriche; quindi se è settato un valore target di utilizzo, il controller calcola il valore di utilizzo come percentuale delle richieste alle risorse equivalenti contenute nei container di ciascun pod. Se invece è impostato un valore grezzo, il controller utilizza direttamente tale valore. Il controller quindi assume o la media di utilizzo o il valore grezzo, per produrre poi un rapporto usato per scalare il numero di repliche desiderate. Da sottolineare il fatto che se alcuni container all'interno dei pods non hanno il set di richieste di risorse rilevanti, l'utilizzo di CPU per quel dato pod non verrà definito e l'autoscaler non intraprenderà alcuna azione per tale metrica.\\
 Kubernetes supporta inolte lo scaling di applicazioni stateless come i cluster Cassandra e i set di repliche MongoDB, ovvero più in generale di workloads persistenti, quali i database NoSQL e i database relazionali (RDBMS).
@@ -209,18 +208,48 @@ La sicurezza in Kubernetes è configurata su più livelli. Gli endpoints dell'AP
 I service account gestiti da Kubernetes sono creati in automatico dall'API server. Ciascuna operazione che gestisce un processo in esecuzione all'interno di un cluster deve essere avviata da un utente autenticato; questo meccanismo garantisce la sicurezza del cluster.\\
 Le applicazioni eseguite all'interno di un cluster Kubernetes possono beneficiare del concetto di \textit{segreti} per un accesso sicuro ai dati. Un \textbf{segreto} è un oggetto Kubernetes che contiene una piccola quantità di dati sensibili, come password, token o chiave, che riduce il rischio di esposizione accidentale dei dati. Gli username e le password sono codificati in base64 prima di essere memorizzati all'interno del cluster Kubernetes. I pod possono accedere al segreto in fase di runtime tramite i volumi montati o le variabili d'ambiente.\\
 Per permettere o limitare il traffico di rete ai pods, le politiche di rete possono essere applicate al deployment. Una policy di rete è una specifica di come i gruppi di pod possono comunicare tra loro e con altri endpoint di rete. Ciò può risultare utile in un deployment a più livelli per oscurare i pods in modo da non essere esposti ad altre applicazioni.
-\begin{figure}
-  \begin{center}
-\includegraphics[scale = 0.5]{Images/Kubernetes-auth}\\
-  \caption{Utilizzo dei moduli di autenticazione, autorizzazione e Admission Control per controllare l'accesso API in Kubernetes.}
-  \end{center}
-\end{figure}
-\newpage
+\begin{center}
+  \includegraphics[scale = 0.5]{Images/Kubernetes-auth}\\
+\captionof{figure}{Utilizzo dei moduli di autenticazione, autorizzazione e Admission Control per controllare l'accesso API in Kubernetes.}
+\end{center}
 \section{Portabilità}
 Kubernetes è progettato per offrire una libertà di scelta rispetto alla scelta del sistema operativo da utilizzare, all'esecuzione dei container, all'architettura del processore, alle piattaforme cloud e al PaaS.\\
 Infatti un cluster Kubernetes può essere configurato nelle principali distribuzioni Linux, quali CentOS, CoreOS, Debian, Fedora, Red Hat Linux e Ubuntu. Può essere eseguito in locale oppure in piattaforme cloud, come AWS, Azure e Google Cloud; su ambienti virtualizzati basati su KVM e vSphere. Gli utenti possono lanciare container in Docker o rkt runtimes, e nuovi container possono essere lanciati anche a tempo di esecuzione. \\
 Inoltre attraverso la \textit{federation} è anche possibile combinare cluster eseguiti tra più cloud provider differenti e in locale. Ciò porta le funzionalità del cloud ibrido ai workloads containerizzati. In questo modo i clienti possono facilmente spostare i carichi di lavoro da un target di deployment all'altro.
-\chapter{Struttura}
+\chapter{Struttura architetturale}
+Kubernetes, come la maggior parte delle piattaforme distribuite, è composto da almeno un nodo master e nodi di lavoro multipli. In alcuni casi, per garantire alta disponibilità, i nodi master possono essere anche più di uno. Nella seguente immagine viene rappresentata l'architettura di Kubernetes con tutte le sue componenti, che verranno analizzate singolarmente.
+\begin{center}
+  \includegraphics[scale=0.5]{Images/Kubernetes-architecture}
+  \captionof{figure}{Componenti dell'architettura di Kubernetes}
+\end{center}
+\section{Nodo Master}
+Il nodo \textbf{master} è responsabile per l'esposizione dell' API (application program interface), per la pianificazione del deployment e la gestione dell'intero cluser. Attraverso l'esposizione dell'API fornisce all'utente un'interfaccia per poter interagire con il sistema. Concettualmente, all'interno del nodo master non ci dovrebbero essere container in esecuzione.\\
+La definizione degli oggetti in Kubernetes, così come i pods, i Replica sets e i servizi sono un compito del nodo master.
+\begin{center}
+  \includegraphics[scale=0.5]{Images/Kubernetes-master}
+  \captionof{figure}{Componenti del nodo master}
+\end{center}
+Come osservabile dalla figura 4.2, il nodo master si compone di più elementi:
+\begin{itemize}
+  \item \textbf{kube-apiserver}: fornisce il servizio API REST per interagire con altri componenti del sistema. Elabora ogni richiesta API REST, la convalida e infine istruisce il servizio appropriato per eseguirla. Impiega etcd-storage come componente di archiviazione persistente.
+  \item \textbf{etcd-storage}: etcd è un database di CoreOS chiave-valore, distribuito e open-source. Agisce come unica fonte per tutti i componenti del cluster di Kubernetes. Il nodo master utilizza \textit{etcd} per memorizzare i suoi stati, ad esempio i job pianificati, creati e dstribuiti; dettagli e stato dei pod; informazioni sulle repliche, e altro.
+  \item \textbf{kube-scheduler}: lo scheduler è responsabile di trovare un nodo corretto al quale assegnare un pod o un servizio, in base ad alcuni vincoli, ad esempio cerca di bilanciare l'utilizzo delle risorse tra i vari nodi e assicura che i pod si trovino su nodi che abbiano risorse libere a sufficienza.
+  \item \textbf{controller-manager}: il controller manager è un processo che al suo interno incapsula vari controllers. In kubernetes, il controller è identificato come un loop di controllo che periodicamente controlla lo stato del cluster attraverso \textit{kube-apiserver} ed esegue le opportune modifiche per far si che il cluster sia nello stato desiderato. Il controller ha principalmente tre funzioni:
+  \begin{itemize}
+    \item Assegnare il blocco CIDR (Classless Inter-Domain Routing) al nodo quando viene registrato;
+    \item Mantenere aggiornata la lista dei nodi con la lista delle macchine disponibili del cloud provider. Quando si esegue in un ambiente cloud, ogni volta che un nodo non è sano, il controller del nodo chiede al provider cloud se la VM per quel nodo è ancora disponibile. In caso contrario, il controller del nodo elimina il nodo dall'elenco dei nodi;
+    \item Monitorare la salute dei nodi. Il controller è responsabile di aggiornare la condizione "NodeStatus" quando un nodo diventa irraggiungibile.
+  \end{itemize}
+\end{itemize}
+\section{Command Line Interface}
+La command line interface in kubernetes prende il nome di \textbf{kubectl} e permette di eseguire comandi all'interno del cluster Kubernetes interagendo con il nodo master. Infatti comunica con kube-apiserver attraverso il servizio di API REST. Per eseguire un comando dal terminale è sufficiente inserire dopo kubetcl il tipo di operazione desiderata (\textit{create, get, describe, delete}), il type (ovvero il tipo di risorsa) e infine il nome della risorsa. Di seguito un esempio di comando: \textit{"kubetcl get pod pod1"}.
+\section{Nodi Workers}
+I nodi workers possono essere molteplici all'interno di un cluster Kubernetes, e ciascuno di essi può avere un numero variabile di pod, mentre tutti sono detengono tre principali componenti che permettono la corretta esecuzione dei container all'interno del nodo worker. Questi componenti sono \textit{kubelet}, \textit{kube-proxy} e \textit{container runtime}.
+\begin{itemize}
+  \item \textbf{kubelet} è il principale servizio di un nodo worker, responsabile della comunicazione con il nodo master. Inoltre interagisce con il servizio di container runtime per eseguire un pod Kubernetes. Kubelet ottiene la descrizione della configurazione di un pod dal kube-apiserver tramite API REST, per poi ordinare al servizio di container runtime di eseguire i container appropriati. Questo componente riporta anche al master lo stato di salute dell'host su cui è in esecuzione.
+  \item \textbf{kube-proxy} è un servizio proxy che viene eseguito su ciascun nodo worker per gestire il subnetting di singoli host ed esporre il servizio al mondo esterno, con il conseguente bilanciamento del carico del traffico in entrata. Esegue l'inoltro delle richieste ai relativi pod/containers tra le varie reti isolate all'interno del cluster.
+  \item \textbf{Container runtime} è il software responsabile dell'esecuzione dei container all'interno del nodo. Kubernetes supporta diversi software runtime: Docker, rkt, runc, e qualsiasi implementazione runtime di Open Container Initiative.
+\end{itemize}
 \chapter{Funzioni}
 \chapter{Comportamento}
 \chapter{Razionale}
