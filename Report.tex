@@ -176,6 +176,7 @@ Kubernetes essendo una piattaforma cloud è compatibile con diverci providers a 
 \hline
 \end{tabularx}
 \end{table}
+\newpage
 \subsection{Concorrenti}
 Tra i tool concorrenti a Kubernetes che offrono un servizio di orchestrazione di container abbiamo \textbf{Docker Swarm} e \textbf{Marathon}. Marathon è una piattaforma di orchestrazione di applicazioni e servizi per Apache Mesos.\\
 Docker Swarm invece, che è integrato in Docker come \textit{Swarm Mode}, è un orchestratore per i container Docker. Confrontando Docker Swarm con Kubernetes, emerge che quest'ultimo è un tool molto più efficiente, in quanto offre una maggiore scalabilità e automazione. Inoltre Kubernetes possiede delle proprie librerie per il monitoraggio e i logging; ciò viene a mancare in Docker Swarm, che deve ricorrere ad applicazioni di terze parti per sopperire a queste features.
@@ -217,6 +218,23 @@ Kubernetes è progettato per offrire una libertà di scelta rispetto alla scelta
 Infatti un cluster Kubernetes può essere configurato nelle principali distribuzioni Linux, quali CentOS, CoreOS, Debian, Fedora, Red Hat Linux e Ubuntu. Può essere eseguito in locale oppure in piattaforme cloud, come AWS, Azure e Google Cloud; su ambienti virtualizzati basati su KVM e vSphere. Gli utenti possono lanciare container in Docker o rkt runtimes, e nuovi container possono essere lanciati anche a tempo di esecuzione. \\
 Inoltre attraverso la \textit{federation} è anche possibile combinare cluster eseguiti tra più cloud provider differenti e in locale. Ciò porta le funzionalità del cloud ibrido ai workloads containerizzati. In questo modo i clienti possono facilmente spostare i carichi di lavoro da un target di deployment all'altro.
 \chapter{Struttura architetturale}
+Al giorno d'oggi le applicazioni conteinerizzate necessitano di un'infrastruttura sufficientemente solida per far fronte alle esigenze del clustering e allo stress dell'orchestrazione dinamica. Tale infrastruttura deve poter permettere lo scheduling, il monitoraggio, l'aggiornamento e il reallocamento dei container tra i vari host. Deve essere in grado di trattare la computazione, l'archiviazione e le primitive di rete sottostanti come un pool di risorse. Ogni carico di lavoro containerizzato dovrebbe essere in grado di sfruttare le risorse a esso esposte, inclusi CPU, unità di archiviazione e reti.
+\begin{center}
+  \includegraphics[scale=0.4]{Images/Kubernetes-overview}
+  \captionof{figure}{I livelli del sistema, da un punto di vista di orchestrazione dei container}
+\end{center}
+Kubernetes è un gestore open source di cluster che astrae l'infrastruttura fisica sottostante, semplificando l'esecuzione di applicazioni containerizzate su larga scala. Un'applicazione, gestita per l'intero ciclo di vita da Kubernetes, è composta da un set di container raccolti e coordinati in una singola unità. Un efficiente livello di gestione del cluster permette a Kubernetes di poter disaccopiare efficacemente l'applicazione dall'infrastruttura di supporto, come mostrato in figura 4.1. Una volta che l'infrastruttura di Kubernetes è stata configurata i team DevOps possono concentrarsi sulla gestione dei carichi di lavoro distribuiti piuttosto che gestire il pool di risorse sottostanti.
+L'API di Kubernetes può essere utilizzata per creare i componenti che fungono da blocchi fondamentali, o primitive, di microservizi. Questi componenti sono autonomi, il che significa che esistono indipendentemente dagli altri componenti.
+\section{Pod}
+Un pod è una collezione di uno o più container che funge da unità principale di Kubernetes per la gestione del carico di lavoro, fungendo da "confine logico" per i container che condividono contesto e risorse. Raggruppare container correlati in pod fa fronte alle sfide configurazionali introdotte quando la containerizzazione ha sostituito la virtualizzazione di prima generazione, rendendo possibile l'esecuzione di più processi dipendenti.\\In fase di runtime, i pod possono essere ridimensionati creando set di repliche, che garantiscono che la distribuzione esegua sempre il numero desiderato di pod. Come già anticipato ogni pod è una raccolta di più container e per comunicare tra loro utilizzano le remote procedure calls (RPC), condividendo lo stack di archiviazione e di rete.\\
+Negli scenari in cui i container devono essere accoppiati e co-localizzati, ad esempio un contenitore del server Web e un contenitore della cache, possono essere facilmente raccolti in un singolo pod. Un pod può essere scalato manualmente o tramite una feature chiamata Horizontal Pod Autoscaling (HPA).\\
+Attraverso questo metodo il numero dei container al'interno di un pod viene aumentato proporzionalmente.
+\begin{center}
+  \includegraphics[scale=0.4]{Images/Kubernetes-pod}
+  \captionof{figure}{Un pod multi-container che contiene un file puller e un server Web che utilizza un volume persistente per l'archiviazione condivisa tra container}
+\end{center}
+I Pods consentono inoltre un separazione funzionale tra development e deployment. Mentre gli sviluppatori si concentrano sul loro codice, gli operatori possono concentrarsi su una visione più ampia di come i container possono essere uniti insieme in un'unità funzionale. Il risultato ottenuto è una quantità ottimale di portabilità, dal momento in cui un pod non è altro che la rappresentazione di più immagini di container gestiti insieme.
+\chapter{Comportamento}
 Kubernetes, come la maggior parte delle piattaforme distribuite, è composto da almeno un nodo master e nodi di lavoro multipli. In alcuni casi, per garantire alta disponibilità, i nodi master possono essere anche più di uno. Nella seguente immagine viene rappresentata l'architettura di Kubernetes con tutte le sue componenti, che verranno analizzate singolarmente.
 \begin{center}
   \includegraphics[scale=0.5]{Images/Kubernetes-architecture}
@@ -224,7 +242,7 @@ Kubernetes, come la maggior parte delle piattaforme distribuite, è composto da 
 \end{center}
 \section{Nodo Master}
 Il nodo \textbf{master} è responsabile per l'esposizione dell' API (application program interface), per la pianificazione del deployment e la gestione dell'intero cluser. Attraverso l'esposizione dell'API fornisce all'utente un'interfaccia per poter interagire con il sistema. Concettualmente, all'interno del nodo master non ci dovrebbero essere container in esecuzione.\\
-La definizione degli oggetti in Kubernetes, così come i pods, i Replica sets e i servizi sono un compito del nodo master.
+La definizione degli oggetti in Kubernetes, così come i pods, i Replica sets e i servizi sono un compito del nodo master. Sono progettati per essere liberamente accoppiati, estendibili e adattabili a un'ampia varietà di carichi di lavoro. L'API fornisce questa estensibilità ai componenti interni, nonché estensioni e container in esecuzione su Kubernetes.
 \begin{center}
   \includegraphics[scale=0.5]{Images/Kubernetes-master}
   \captionof{figure}{Componenti del nodo master}
@@ -234,7 +252,7 @@ Come osservabile dalla figura 4.2, il nodo master si compone di più elementi:
   \item \textbf{kube-apiserver}: fornisce il servizio API REST per interagire con altri componenti del sistema. Elabora ogni richiesta API REST, la convalida e infine istruisce il servizio appropriato per eseguirla. Impiega etcd-storage come componente di archiviazione persistente.
   \item \textbf{etcd-storage}: etcd è un database di CoreOS chiave-valore, distribuito e open-source. Agisce come unica fonte per tutti i componenti del cluster di Kubernetes. Il nodo master utilizza \textit{etcd} per memorizzare i suoi stati, ad esempio i job pianificati, creati e dstribuiti; dettagli e stato dei pod; informazioni sulle repliche, e altro.
   \item \textbf{kube-scheduler}: lo scheduler è responsabile di trovare un nodo corretto al quale assegnare un pod o un servizio, in base ad alcuni vincoli, ad esempio cerca di bilanciare l'utilizzo delle risorse tra i vari nodi e assicura che i pod si trovino su nodi che abbiano risorse libere a sufficienza.
-  \item \textbf{controller-manager}: il controller manager è un processo che al suo interno incapsula vari controllers. In kubernetes, il controller è identificato come un loop di controllo che periodicamente controlla lo stato del cluster attraverso \textit{kube-apiserver} ed esegue le opportune modifiche per far si che il cluster sia nello stato desiderato. Il controller ha principalmente tre funzioni:
+  \item \textbf{controller-manager}: il controller manager, o semplicemente controller, è un processo che al suo interno incapsula vari controllers. In kubernetes, il controller è identificato come un loop di controllo che periodicamente controlla lo stato del cluster attraverso \textit{kube-apiserver} ed esegue le opportune modifiche per far si che il cluster sia nello stato desiderato. Il controller ha principalmente tre funzioni:
   \begin{itemize}
     \item Assegnare il blocco CIDR (Classless Inter-Domain Routing) al nodo quando viene registrato;
     \item Mantenere aggiornata la lista dei nodi con la lista delle macchine disponibili del cloud provider. Quando si esegue in un ambiente cloud, ogni volta che un nodo non è sano, il controller del nodo chiede al provider cloud se la VM per quel nodo è ancora disponibile. In caso contrario, il controller del nodo elimina il nodo dall'elenco dei nodi;
@@ -244,14 +262,14 @@ Come osservabile dalla figura 4.2, il nodo master si compone di più elementi:
 \section{Command Line Interface}
 La command line interface in kubernetes prende il nome di \textbf{kubectl} e permette di eseguire comandi all'interno del cluster Kubernetes interagendo con il nodo master. Infatti comunica con kube-apiserver attraverso il servizio di API REST. Per eseguire un comando dal terminale è sufficiente inserire dopo kubetcl il tipo di operazione desiderata (\textit{create, get, describe, delete}), il type (ovvero il tipo di risorsa) e infine il nome della risorsa. Di seguito un esempio di comando: \textit{"kubetcl get pod pod1"}.
 \section{Nodi Workers}
-I nodi workers possono essere molteplici all'interno di un cluster Kubernetes, e ciascuno di essi può avere un numero variabile di pod, mentre tutti sono detengono tre principali componenti che permettono la corretta esecuzione dei container all'interno del nodo worker. Questi componenti sono \textit{kubelet}, \textit{kube-proxy} e \textit{container runtime}.
+I nodi workers possono essere molteplici all'interno di un cluster Kubernetes, e ciascuno di essi può avere un numero variabile di pod, mentre tutti possiedono tre principali componenti che permettono la corretta esecuzione dei container all'interno del nodo worker. Questi componenti sono \textit{kubelet}, \textit{kube-proxy} e \textit{container runtime}.
 \begin{itemize}
   \item \textbf{kubelet} è il principale servizio di un nodo worker, responsabile della comunicazione con il nodo master. Inoltre interagisce con il servizio di container runtime per eseguire un pod Kubernetes. Kubelet ottiene la descrizione della configurazione di un pod dal kube-apiserver tramite API REST, per poi ordinare al servizio di container runtime di eseguire i container appropriati. Questo componente riporta anche al master lo stato di salute dell'host su cui è in esecuzione.
   \item \textbf{kube-proxy} è un servizio proxy che viene eseguito su ciascun nodo worker per gestire il subnetting di singoli host ed esporre il servizio al mondo esterno, con il conseguente bilanciamento del carico del traffico in entrata. Esegue l'inoltro delle richieste ai relativi pod/containers tra le varie reti isolate all'interno del cluster.
   \item \textbf{Container runtime} è il software responsabile dell'esecuzione dei container all'interno del nodo. Kubernetes supporta diversi software runtime: Docker, rkt, runc, e qualsiasi implementazione runtime di Open Container Initiative.
 \end{itemize}
 \chapter{Funzioni}
-\chapter{Comportamento}
+
 \chapter{Razionale}
 \chapter{Aspetti analitici}
 \chapter{Stili architetturali simili o derivati}
