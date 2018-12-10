@@ -234,6 +234,26 @@ Attraverso questo metodo il numero dei container al'interno di un pod viene aume
   \captionof{figure}{Un pod multi-container che contiene un file puller e un server Web che utilizza un volume persistente per l'archiviazione condivisa tra container}
 \end{center}
 I Pods consentono inoltre un separazione funzionale tra development e deployment. Mentre gli sviluppatori si concentrano sul loro codice, gli operatori possono concentrarsi su una visione più ampia di come i container possono essere uniti insieme in un'unità funzionale. Il risultato ottenuto è una quantità ottimale di portabilità, dal momento in cui un pod non è altro che la rappresentazione di più immagini di container gestiti insieme.
+\section{Service (SOA)}
+Kubernetes, come la maggior parte dei sistemi distribuiti, è progettato secondo un'architettura orientata ai microservizi (\textbf{SOA}). In generale in questo tipo di architettura, ogni servizio ha un proprio contesto funzionale distinto e l'interazione con qualsiasi cosa al di fuori di tale contesto avviene tramite un'interfaccia astratta, in genere l'API di un altro servizio pubblico.\\
+\\
+Nel caso di Kubernetes, un singolo pod o un ReplicaSet può essere esposto a client interni o esterni attraverso servizi, che associano un set di pod secondo un criterio specifico. Quando viene creato un pod, viene assegnato un indirizzo IP accessibile solo all'interno del cluster. Ma non vi è alcuna garanzia che l'indirizzo IP del pod rimarrà invariato per tutto il suo ciclo di vita. Kubernetes può reallocare o re-instanziare i pod in fase di runtime, creando un nuovo indirizzo IP per il pod. Per compensare questa incertezza, i servizi assicurano che il traffico sia sempre indirizzato al pod appropriato all'interno del cluster, indipendentemente dal nodo su cui è pianificato.  Ogni servizio espone un indirizzo IP e può anche esporre un endpoint DNS, entrambi i quali non cambieranno mai. I consumatori interni o esterni che necessitano di comunicare con un set di pod utilizzeranno l'indirizzo IP del servizio o il suo endpoint DNS più noto. In questo modo, il servizio funge da colla per il collegamento di pod con altri pod.
+\\
+In Kubernetes qualsiasi oggetto API, incluso un nodo o un pod, può avere coppie chiave-valore ad esso associate o metadati aggiuntivi per identificare e raggruppare oggetti che condividono un attributo o una proprietà comune. Kubernetes si riferisce a queste coppie chiave-valore come etichette, in inglese \textbf{"labels"}. \\
+Un \textbf{selettore} è un tipo di criterio utilizzato per interrogare gli oggetti di Kubernetes che corrispondono a un valore di label. QUesta potente tecnica consente di avere un basso accoppiamento tra oggetti. Inoltre possono essere creati nuovi oggetti che corrispondono al valore indicato dal selettore. Labels e selettori formano il meccanismo principale di Kubernetes per identificare i componenti ai quali si applica un'operazione.\\
+Un \textbf{ReplicaSet} si basa su etichette e selettori per determinare quali pods saranno scalati. In fase di runtime i pod possono essere scalati attraerso i ReplicaSet garantendo così che ogni deployment abbia sempre il numero desiderato di pods. Ogni pod la cui etichetta corrisponde al selettore definito dal servizio verrà esposto il suo endpoint. Quando un'operazione di scaling viene avviata da un set di repliche, i nuovi pod creati da tale operazione inizieranno immediatamente a ricevere il traffico. Un servizio fornisce quindi il bilanciamento del carico di base instradando il traffico tra i pod di corrispondenza.
+\\
+Questa architettura fornisce un meccanismo flessibile e liberamente accoppiato per l'individuazione dei servizi. Infatti la decostruzione di un sistema in un insieme di servizi complementari disaccoppia le operazioni tra le varie parti. Questa astrazione aiuta a stabilire chiare relazioni tra i servizi, il suo ambiente sottostante e i consumatori di quel servizio.\\
+Creare chiare delineazioni può aiutare a isolare i problemi, ma permette inoltre di scalare ciascun servizio indipendentemente dagli altri. Questo tipo di progettazione orientata ai servizi è molto simile alla programmazione orientata agli oggetti.
+\begin{center}
+  \includegraphics[scale=0.6]{Images/Kubernetes-service}
+  \captionof{figure}{I servizi in Kubernetes}
+\end{center}
+La figura 4.3 mostra la funzionalità dei servizi all'interno di un cluster Kubernetes. Sono presenti tre tipi di pod, distinti dai colori giallo, verde, rosso. Un replication controller ha scalato tali pod per eseguire istanze su tutti i nodi disponibili. Ogni classe di pod è esposto ai clients attraverso un servizio, rappresentato dal cerchio colorato.\\
+Supponendo che ogni pod abbia una label della forma \textit{color=value}, il suo servizio associato dovrebbe avere un selettore che lo abbini.\\ \\
+Quando un client raggiunge il servizio rosso, la richiesta viene inoltrata a un qualsiasi pod che abbia la label \textit{color=red}. Se viene aggiunto un nuovo pod in seguito ad uno scaling, esso viene immediatamente rilevato dal servizio, in virtù della label e del selettore corrispondente.\\ \\
+In Kubernetes i servizi possono essere configurati per esporre pods a client interni o esterni. Un servizio esposto internamente è raggiungibile attraverso l'indirizzo \textbf{ClusterIP}, ovvero l'indirizzo del cluster. Questi tipi di servizio sono ad esempio i pods Database, che non necessitano di essere esposti esternamente. Invece quando un servizio necessita di essere raggiunto dall'esterno, è necessario esporre una porta specifica in ciascun nodo, chiamata \textbf{NodePort}. \\
+Negli ambienti cloud pubblici, Kubernetes può eseguire il servizio di bilanciamento del carico configurato automaticamente per il routing del traffico ai suoi nodi.
 \chapter{Comportamento}
 Kubernetes, come la maggior parte delle piattaforme distribuite, è composto da almeno un nodo master e nodi di lavoro multipli. In alcuni casi, per garantire alta disponibilità, i nodi master possono essere anche più di uno. Nella seguente immagine viene rappresentata l'architettura di Kubernetes con tutte le sue componenti, che verranno analizzate singolarmente.
 \begin{center}
@@ -241,7 +261,7 @@ Kubernetes, come la maggior parte delle piattaforme distribuite, è composto da 
   \captionof{figure}{Componenti dell'architettura di Kubernetes}
 \end{center}
 \section{Nodo Master}
-Il nodo \textbf{master} è responsabile per l'esposizione dell' API (application program interface), per la pianificazione del deployment e la gestione dell'intero cluser. Attraverso l'esposizione dell'API fornisce all'utente un'interfaccia per poter interagire con il sistema. Concettualmente, all'interno del nodo master non ci dovrebbero essere container in esecuzione.\\
+Il nodo \textbf{master} è responsabile per l'esposizione dell' API (application program interface), per la pianificazione del deployment e la gestione dell'intero cluster. Attraverso l'esposizione dell'API fornisce all'utente un'interfaccia per poter interagire con il sistema. Concettualmente, all'interno del nodo master non ci dovrebbero essere container in esecuzione.\\
 La definizione degli oggetti in Kubernetes, così come i pods, i Replica sets e i servizi sono un compito del nodo master. Sono progettati per essere liberamente accoppiati, estendibili e adattabili a un'ampia varietà di carichi di lavoro. L'API fornisce questa estensibilità ai componenti interni, nonché estensioni e container in esecuzione su Kubernetes.
 \begin{center}
   \includegraphics[scale=0.5]{Images/Kubernetes-master}
@@ -249,8 +269,8 @@ La definizione degli oggetti in Kubernetes, così come i pods, i Replica sets e 
 \end{center}
 Come osservabile dalla figura 4.2, il nodo master si compone di più elementi:
 \begin{itemize}
-  \item \textbf{kube-apiserver}: fornisce il servizio API REST per interagire con altri componenti del sistema. Elabora ogni richiesta API REST, la convalida e infine istruisce il servizio appropriato per eseguirla. Impiega etcd-storage come componente di archiviazione persistente.
-  \item \textbf{etcd-storage}: etcd è un database di CoreOS chiave-valore, distribuito e open-source. Agisce come unica fonte per tutti i componenti del cluster di Kubernetes. Il nodo master utilizza \textit{etcd} per memorizzare i suoi stati, ad esempio i job pianificati, creati e dstribuiti; dettagli e stato dei pod; informazioni sulle repliche, e altro.
+  \item \textbf{kube-apiserver}: Il server API espone l'API di Kubernetes tramite JSON su HTTP, fornendo l'interfaccia REST per gli endpoint interni ed esterni dell'orchestratore per interagire con altri componenti del sistema. Impiega etcd-storage come componente di archiviazione persistente. La CLI, l'interfaccia utente web o un altro strumento possono inviare una richiesta al server API. Il server elabora e convalida la richiesta, quindi aggiorna lo stato degli oggetti API in etcd e infine istruisce il servizio appropriato per eseguirla. Ciò consente ai client di configurare carichi di lavoro e container tra i nodi worker.
+  \item \textbf{etcd-storage}: etcd è un database di CoreOS chiave-valore, distribuito e open-source, nonchè persistente e leggero. Agisce come unica fonte per tutti i componenti del cluster di Kubernetes, infatti altri componenti e servizi guardano le modifiche a etcd per mantenere lo stato desiderato di un'applicazione. Il nodo master utilizza \textit{etcd} per memorizzare i suoi stati, ad esempio i job pianificati, creati e dstribuiti; dettagli e stato dei pod; informazioni sulle repliche, e altro.
   \item \textbf{kube-scheduler}: lo scheduler è responsabile di trovare un nodo corretto al quale assegnare un pod o un servizio, in base ad alcuni vincoli, ad esempio cerca di bilanciare l'utilizzo delle risorse tra i vari nodi e assicura che i pod si trovino su nodi che abbiano risorse libere a sufficienza.
   \item \textbf{controller-manager}: il controller manager, o semplicemente controller, è un processo che al suo interno incapsula vari controllers. In kubernetes, il controller è identificato come un loop di controllo che periodicamente controlla lo stato del cluster attraverso \textit{kube-apiserver} ed esegue le opportune modifiche per far si che il cluster sia nello stato desiderato. Il controller ha principalmente tre funzioni:
   \begin{itemize}
@@ -268,6 +288,10 @@ I nodi workers possono essere molteplici all'interno di un cluster Kubernetes, e
   \item \textbf{kube-proxy} è un servizio proxy che viene eseguito su ciascun nodo worker per gestire il subnetting di singoli host ed esporre il servizio al mondo esterno, con il conseguente bilanciamento del carico del traffico in entrata. Esegue l'inoltro delle richieste ai relativi pod/containers tra le varie reti isolate all'interno del cluster.
   \item \textbf{Container runtime} è il software responsabile dell'esecuzione dei container all'interno del nodo. Kubernetes supporta diversi software runtime: Docker, rkt, runc, e qualsiasi implementazione runtime di Open Container Initiative.
 \end{itemize}
+\begin{center}
+  \includegraphics[scale=0.5]{Images/Kubernetes-workers}
+  \captionof{figure}{Componenti dei nodi workers}
+\end{center}
 \chapter{Funzioni}
 
 \chapter{Razionale}
