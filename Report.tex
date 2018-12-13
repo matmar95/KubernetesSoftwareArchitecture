@@ -13,7 +13,7 @@
 \usepackage{makecell}
 \usepackage{fancyhdr}
 \usepackage[font=small,labelfont=bf]{caption}
-\linespread{1.3}
+\linespread{1.2}
 \textwidth=450pt\oddsidemargin=0pt
 \begin{document}
 \begin{titlepage}
@@ -44,8 +44,8 @@ Kubernetes è un sistema open source per la gestione di applicazioni containeriz
 In generale un sistema distribuito necessita di più componenti per il corretto funzionamento, alcune open source e altre commerciali; invece Kubernetes da solo fornisce uno scenario in cui le componenti lavorano insieme, andando così a formare un unico componente combinando la semplicità del Platform as a Service (PaaS) con la flessibilità dell'Infrastructure as a Service (IaaS).\\
 L'orchestrazione di container ha avuto un profondo impatto in ogni aspetto del software development e deployment moderno; in particolare ha influenzato l'architettura del Platform as a Service, fornendo un aperto ed efficiente modello per il packaging, deployment, isolamento, scaling e rolling upgrade. Kubernetes svolgerà un ruolo cruciale nell'utilizzo di container da parte di imprese e start-up emergenti.
 \\L'oggetto di questo report è di studiare tutto ciò che riguarda e circonda l'architettura di Kubernetes.
-\chapter{Contesto}
-\section{Scopo del sistema}
+\chapter{Descrizione dell'architettura}
+\section{Scopo}
 In questo capitolo verrà discusso lo scopo di Kubernetes e la sua interazione con le entità esterne, nonchè i principali casi d'uso. \\
 Kubernetes, come introdotto nel Capitolo 1, è un sistema di orchestrazione di container e per questo motivo si occupa principalmente di \textbf{deployment}, \textbf{scaling} e \textbf{management} di applicazioni containerizzate. Di seguito viene definito ognuno di questi tasks:
 \begin{itemize}
@@ -59,7 +59,7 @@ Kubernetes, come introdotto nel Capitolo 1, è un sistema di orchestrazione di c
 \item \textbf{Scaling}: permette di ridimensionare l'applicazione a seconda delle esigenze dell'utente, andando a modificare le dimensioni del cluster e il numero di repliche dei pod. Un \textbf{pod} è il più piccolo oggetto deployabile nel modello a oggetti di Kubernetes e può incapsulare un singolo container o più container che necessitano di lavorare insieme.
 \item \textbf{Management}: fornisce un'interfaccia per la gestione dei cluster e delle applicazioni containerizzate. Un cluster di Kubernetes viene ospitato e gestito da un venditore commerciale, quali ad esempio Google Container Engine (GKE), Amazon EC2 Container Service e Azure Container Service di Microsoft, che offrono servizi di CaaS nel cloud pubblico. Molti utenti hanno iniziato ad usare Kubernetes attraverso Google Container Engine, essendo uno dei primi servizi di gestione di Kubernetes nel mercato.
 \end{itemize}
-\section{Entità esterne}
+\section{Contesto}
 Nella figura seguente è espresso il \textit{system context diagram} di Kubernetes, che definisce le relazioni tra esso e le entità esterne.
 \begin{center}
   \includegraphics[scale = 0.6]{Images/ContextModelDiagram}
@@ -80,10 +80,32 @@ Nella seguente immagine è raffigurata la griglia o matrice \textit{power/intere
 \begin{center}
   \includegraphics[scale = 0.45]{Images/power-interest}
 \end{center}
+\newpage
 \subsection{Development}
 Il principale linguaggio con cui Kubernetes è sviluppato è \textbf{Go}, un linguaggio open-source progettato da tre ingegneri di Google, ma nonostante ciò possiede dipendenze da varie librerie esterne, quali Amazon Web Services SDK (AWS), Docker API, Azure SDK,  Container Network Interface (CNI), e Gophercloud. Inoltre Kubernetes si affida a Jenkins per la Continuous Integration.
+\subsubsection{Organizzazione a moduli}
+Il codice sorgente di Kubernetes è organizzato in livelli di moduli in base alle funzionalità. La panoramica generale della partizione dei moduli è mostrata nella Figura 2.1.\\
+\begin{center}
+  \includegraphics[width=\linewidth]{Images/Kubernetes-development}
+  \captionof{figure}{Organizzazione a moduli di Kubernetes}
+\end{center}
+\newpage
+Di seguito viene spiegato ciascun livello.
+\begin{itemize}
+  \item \textbf{Nucleo - API ed Esecuzione}\\
+  Il nucleo contiene il set minimo di funzionalità necessarie per costruire i livelli superiori del sistema ed è composto da moduli API ed Execution. I moduli API forniscono una raccolta di API REST e i moduli di esecuzione di Kubernetes sono responsabili dell'esecuzione dell'applicazione all'interno dei container. Il modulo di esecuzione più importante in Kubernetes è \textit{Kubelet}.
+  \item \textbf{Livello Applicazione - Deployment e Routing}\\
+  Il livello dell'applicazione fornisce auto-healing, scaling, gestione del ciclo di vita delle applicazioni, individuazione dei servizi, bilanciamento del carico e routing. Inoltre, il modulo di deployment fornisce metodi container-centric e controller del ciclo di vita per supportare l'orchestrazione, mentre il modulo di routing fornisce il servizio di scheduling.
+  \item \textbf{Livello Governance - Automazione e Policy Enforcement}\\
+  Questo livello contiene il modulo di automazione che fornisce lo scaling automatico del cluster e il provisioning automatico dei nodi. Il modulo di policy enforcement fornisce i mezzi per configurare e scoprire le politiche predefinite per il cluster.
+  \item \textbf{Livello Interface - Librerie e Tools}\\
+  Questo livello contiene librerie, tools, sistemi e interfacce utente comunemente usate nel progetto Kubernetes. Uno degli strumenti più importanti in questo livello è \textbf{kubectl}. Contiene anche altre librerie client come \textit{client-go} e \textit{client-python}.
+  \item \textbf{Ecosistema}\\
+  Questo livello non fa realmente parte di Kubernetes, ma fornisce le funzionalità comunemente necessarie per distribuire e gestire applicazioni containerizzate. L'esempio più popolare di questo livello di supporto è Docker, che esegue il container reale nei nodi. I moduli utilizzati per comunicare con il provider di cloud appartengono a questo livello.
+\end{itemize}
+\newpage
 \subsection{Piattaforme}
-Kubernetes essendo una piattaforma cloud è compatibile con diverci providers a seconda delle necessità e dell'utilizzo. Di seguito sono riportate alcune soluzioni differenti a seconda del pattern di utilizzo.
+Kubernetes essendo una piattaforma cloud è compatibile con diversi providers a seconda delle necessità e dell'utilizzo. Di seguito sono riportate alcune soluzioni differenti a seconda del pattern di utilizzo.
 \subsubsection{Container Management, soluzioni in locale e PaaS}
 \begin{table}[ht]
   \small
@@ -107,24 +129,16 @@ Kubernetes essendo una piattaforma cloud è compatibile con diverci providers a 
     \textbf{OpenShift Container Platform} (RedHat)&PaaS, on-premises\\
     \multicolumn{2}{|X|}{\textit{Una piattaforma di applicazioni per container che può estendersi su più infrastrutture. È costruito usando la tecnologia Docker e Kubernetes.}}\\
     \hline
+    \textbf{OpenShift Online} (RedHat)&Hosted\\
+    \multicolumn{2}{|X|}{\textit{Versione hosted di OpenShift. Il funzionamento è il medesimo a quello di OpenShift Container Platform}}\\
+    \hline
+    \textbf{Platform9 Managed Kubernetes for Docker} (Platform9)&Hosted, on-premises\\
+    \multicolumn{2}{|X|}{\textit{I clienti possono utilizzare il singolo pannello di Platform 9 per orchestrare e gestire i container insieme alle macchine virtuali. In pratica, è possibile orchestrare le VM utilizzando OpenStack e/o Kubernetes}}\\
+    \hline
   \end{tabularx}
   \end{center}
 \end{table}
-
-\begin{table}[ht]
-\small
-\centering
-\begin{tabularx}{\textwidth}{|lr|}
-\hline
-\textbf{OpenShift Online} (RedHat)&Hosted\\
-\multicolumn{2}{|X|}{\textit{Versione hosted di OpenShift. Il funzionamento è il medesimo a quello di OpenShift Container Platform}}\\
-\hline
-\textbf{Platform9 Managed Kubernetes for Docker} (Platform9)&Hosted, on-premises\\
-\multicolumn{2}{|X|}{\textit{I clienti possono utilizzare il singolo pannello di Platform 9 per orchestrare e gestire i container insieme alle macchine virtuali. In pratica, è possibile orchestrare le VM utilizzando OpenStack e/o Kubernetes}}\\
-\hline
-\end{tabularx}
-\end{table}
-
+\newpage
 \subsubsection{Tools per deployment e controllo di clusters Kubernetes}
 \begin{table}[ht]
 \small
@@ -201,28 +215,45 @@ Per quanto riguarda il fronte applicazione, Kubernetes assicura un alta disponib
 Quindi l'utilizzatore di Kubernetes può dichiarare il numero minimo di pods che devono essere eseguiti in un dato istante di tempo. Se un container o un pod si arresta in modo anomalo a causa di un errore, la policy dichiarativa può riportare il deployment alla configurazione desiderata.\\
 Analizzando la disponibilità rispetto all'infrastruttura, Kubernetes supporta un'ampia gamma di back-end di archiviazione, quali file systems distribuiti, come il file systems di rete (\textbf{NFS}) e \textbf{GlusterFS}, gli storage persistente a livello di blocco, come \textbf{Amazon Elastic Block Store} (EBS) e Google Compute Engine, e infine container di storage come \textbf{Flocker}, un open-source Container Data Volume Manager per le applicazioni in Docker. L'aggiunta di un livello di archiviazione affidabile e disponibile a Kubernetes garantisce un'elevata disponibilità di workloads statici. Ogni componente del cluster di Kubernetes - etcd, API server, nodi - può essere configurato per garantire un alta disponibilità. Le applicazioni hanno quindi il vantaggio di usufruire di un bilanciamento del carico di lavoro e di checks di controllo per garantire disponibilità.
 \section{Sicurezza}
+Essendo una piattaforma di orchestrazione, Kubernetes influisce su molte funzioni di sicurezza runtime. Questi includono autenticazione, autorizzazione, logging e isolamento delle risorse, oltre che più avanzati implicazioni come il posizionamento del carico di lavoro e la segmentazione della rete. \\
+Però per affrontare correttamente la sicurezza, dobbiamo prima discutere i modelli di minaccia. Nell'ambiente di Kubernetes, ci sono generalmente quattro tipi di minacce che si applicano a prescindere dal modello di implementazione (con alcune eccezioni di casi limite)\\
+\begin{center}
+  \includegraphics[width=\linewidth]{Images/Kubernetes-minacce}
+  \captionof{figure}{Quattro tipi di minacce che si applicano indipendentemente dal metodo di deployment}
+\end{center}
 La sicurezza in Kubernetes è configurata su più livelli. Gli endpoints dell'API sono protetti tramite Transport Layes Security (\textbf{TLS}), che garantisce l'autenticazione dell'utente utilizzando il meccanismo di autenticazione più sicuro disponibile. I cluster di Kubernetes hanno due categorie di utenti:
 \begin{itemize}
   \item Service account, gestiti direttamente da Kubernetes;
   \item Utenti normali, che si suppone essere gestiti da un servizio indipendente.
 \end{itemize}
 I service account gestiti da Kubernetes sono creati in automatico dall'API server. Ciascuna operazione che gestisce un processo in esecuzione all'interno di un cluster deve essere avviata da un utente autenticato; questo meccanismo garantisce la sicurezza del cluster.\\
-Le applicazioni eseguite all'interno di un cluster Kubernetes possono beneficiare del concetto di \textit{segreti} per un accesso sicuro ai dati. Un \textbf{segreto} è un oggetto Kubernetes che contiene una piccola quantità di dati sensibili, come password, token o chiave, che riduce il rischio di esposizione accidentale dei dati. Gli username e le password sono codificati in base64 prima di essere memorizzati all'interno del cluster Kubernetes. I pod possono accedere al segreto in fase di runtime tramite i volumi montati o le variabili d'ambiente.\\
-Per permettere o limitare il traffico di rete ai pods, le politiche di rete possono essere applicate al deployment. Una policy di rete è una specifica di come i gruppi di pod possono comunicare tra loro e con altri endpoint di rete. Ciò può risultare utile in un deployment a più livelli per oscurare i pods in modo da non essere esposti ad altre applicazioni.
+Le applicazioni eseguite all'interno di un cluster Kubernetes possono beneficiare del concetto di \textit{segreto} per un accesso sicuro ai dati. Un \textbf{segreto} è un oggetto Kubernetes che contiene una piccola quantità di dati sensibili, come password, token o chiave, che riduce il rischio di esposizione accidentale dei dati. Gli username e le password sono codificati in base64 prima di essere memorizzati all'interno del cluster Kubernetes. I pod possono accedere al segreto in fase di runtime tramite i volumi montati o le variabili d'ambiente.\\
+Per permettere o limitare il traffico di rete ai pods, le politiche di rete possono essere applicate al deployment. Una policy di rete è una specifica di come i gruppi di pod possono comunicare tra loro e con altri endpoint di rete. Ciò può risultare utile in un deployment a più livelli per oscurare i pods in modo da non essere esposti ad altre applicazioni.\\
+\\
+L'architettura di autenticazione e autorizzazione di Kubernetes è un processo a strati. Raffigurato nella Figura 3.3, questo processo richiama prima i moduli di autenticazione, poi i moduli di autorizzazione, e infine la richiesta viene passata attraverso i controlli di ammissione (se presenti), prima che raggiunga l'accesso a qualsiasi oggetto. Per abilitare l'autenticazione, l'amministratore del cluster deve configurare il server API per eseguire uno o più moduli di autenticazione al momento della creazione del cluster.\\
 \begin{center}
-  \includegraphics[scale = 0.5]{Images/Kubernetes-auth}\\
+  \includegraphics[width=\linewidth]{Images/Kubernetes-auth}\\
 \captionof{figure}{Utilizzo dei moduli di autenticazione, autorizzazione e Admission Control per controllare l'accesso API in Kubernetes.}
 \end{center}
+L'autenticazione in Kubernetes è consentita con l'uso di certificati client, password, token statici, token di bootstrap e token Web JSON (JWT) per scopi di autenticazione. È possibile programmare una logica di autenticazione aggiuntiva utilizzando un proxy di autenticazione.\\
+Per l'autorizzazione dell'utente, Kubernetes supporta più moduli di autorizzazione:
+\begin{itemize}
+  \item \textbf{Node}: è un modulo di autorizzazione per scopi speciali che si occupa specificamente delle richieste API di kubelets. Un autore del nodo gestisce operazioni API di lettura, scrittura e autenticazione
+  \item \textbf{ABAC} (Attribute Based Access Control): valuta gli attributi di una richiesta di accesso rispetto a un criterio di controllo degli accessi per concedere o negare l'accesso.
+  \item \textbf{RBAC} (Role-Based Access Control): controlla l'accesso alle risorse API di Kubernetes in base al ruolo assegnato dell'utente.
+  \item \textbf{Webhook}:  Kubernetes utilizza Webhook per interrogare un servizio esterno sull'opportunità di concedere o negare la richiesta API corrente. Il metodo webhook fornisce a Kubernetes un mezzo per incorporare una politica di terze parti e potenzialmente implementare una logica arbitraria per le decisioni di autorizzazione.
+\end{itemize}
 \section{Portabilità}
 Kubernetes è progettato per offrire una libertà di scelta rispetto alla scelta del sistema operativo da utilizzare, all'esecuzione dei container, all'architettura del processore, alle piattaforme cloud e al PaaS.\\
 Infatti un cluster Kubernetes può essere configurato nelle principali distribuzioni Linux, quali CentOS, CoreOS, Debian, Fedora, Red Hat Linux e Ubuntu. Può essere eseguito in locale oppure in piattaforme cloud, come AWS, Azure e Google Cloud; su ambienti virtualizzati basati su KVM e vSphere. Gli utenti possono lanciare container in Docker o rkt runtimes, e nuovi container possono essere lanciati anche a tempo di esecuzione. \\
 Inoltre attraverso la \textit{federation} è anche possibile combinare cluster eseguiti tra più cloud provider differenti e in locale. Ciò porta le funzionalità del cloud ibrido ai workloads containerizzati. In questo modo i clienti possono facilmente spostare i carichi di lavoro da un target di deployment all'altro.
 \chapter{Struttura architetturale}
-Al giorno d'oggi le applicazioni conteinerizzate necessitano di un'infrastruttura sufficientemente solida per far fronte alle esigenze del clustering e allo stress dell'orchestrazione dinamica. Tale infrastruttura deve poter permettere lo scheduling, il monitoraggio, l'aggiornamento e il reallocamento dei container tra i vari host. Deve essere in grado di trattare la computazione, l'archiviazione e le primitive di rete sottostanti come un pool di risorse. Ogni carico di lavoro containerizzato dovrebbe essere in grado di sfruttare le risorse a esso esposte, inclusi CPU, unità di archiviazione e reti.
+Al giorno d'oggi le applicazioni conteinerizzate necessitano di un'infrastruttura sufficientemente solida per far fronte alle esigenze del clustering e allo stress dell'orchestrazione dinamica. Tale infrastruttura deve poter permettere lo scheduling, il monitoraggio, l'aggiornamento e il reallocamento dei container tra i vari host. Deve essere in grado di trattare la computazione, l'archiviazione e le primitive di rete sottostanti come un pool di risorse.
 \begin{center}
-  \includegraphics[scale=0.4]{Images/Kubernetes-overview}
+  \includegraphics[scale=0.5]{Images/Kubernetes-overview}
   \captionof{figure}{I livelli del sistema, da un punto di vista di orchestrazione dei container}
 \end{center}
+Ogni carico di lavoro containerizzato dovrebbe essere in grado di sfruttare le risorse a esso esposte, inclusi CPU, unità di archiviazione e reti.
 Kubernetes è un gestore open source di cluster che astrae l'infrastruttura fisica sottostante, semplificando l'esecuzione di applicazioni containerizzate su larga scala. Un'applicazione, gestita per l'intero ciclo di vita da Kubernetes, è composta da un set di container raccolti e coordinati in una singola unità. Un efficiente livello di gestione del cluster permette a Kubernetes di poter disaccopiare efficacemente l'applicazione dall'infrastruttura di supporto, come mostrato in figura 4.1. Una volta che l'infrastruttura di Kubernetes è stata configurata i team DevOps possono concentrarsi sulla gestione dei carichi di lavoro distribuiti piuttosto che gestire il pool di risorse sottostanti.
 L'API di Kubernetes può essere utilizzata per creare i componenti che fungono da blocchi fondamentali, o primitive, di microservizi. Questi componenti sono autonomi, il che significa che esistono indipendentemente dagli altri componenti.
 \section{Pod}
@@ -230,7 +261,7 @@ Un pod è una collezione di uno o più container che funge da unità principale 
 Negli scenari in cui i container devono essere accoppiati e co-localizzati, ad esempio un contenitore del server Web e un contenitore della cache, possono essere facilmente raccolti in un singolo pod. Un pod può essere scalato manualmente o tramite una feature chiamata Horizontal Pod Autoscaling (HPA).\\
 Attraverso questo metodo il numero dei container al'interno di un pod viene aumentato proporzionalmente.
 \begin{center}
-  \includegraphics[scale=0.4]{Images/Kubernetes-pod}
+  \includegraphics[scale=0.3]{Images/Kubernetes-pod}
   \captionof{figure}{Un pod multi-container che contiene un file puller e un server Web che utilizza un volume persistente per l'archiviazione condivisa tra container}
 \end{center}
 I Pods consentono inoltre un separazione funzionale tra development e deployment. Mentre gli sviluppatori si concentrano sul loro codice, gli operatori possono concentrarsi su una visione più ampia di come i container possono essere uniti insieme in un'unità funzionale. Il risultato ottenuto è una quantità ottimale di portabilità, dal momento in cui un pod non è altro che la rappresentazione di più immagini di container gestiti insieme.
@@ -246,7 +277,7 @@ Un \textbf{ReplicaSet} si basa su etichette e selettori per determinare quali po
 Questa architettura fornisce un meccanismo flessibile e liberamente accoppiato per l'individuazione dei servizi. Infatti la decostruzione di un sistema in un insieme di servizi complementari disaccoppia le operazioni tra le varie parti. Questa astrazione aiuta a stabilire chiare relazioni tra i servizi, il suo ambiente sottostante e i consumatori di quel servizio.\\
 Creare chiare delineazioni può aiutare a isolare i problemi, ma permette inoltre di scalare ciascun servizio indipendentemente dagli altri. Questo tipo di progettazione orientata ai servizi è molto simile alla programmazione orientata agli oggetti.
 \begin{center}
-  \includegraphics[scale=0.6]{Images/Kubernetes-service}
+  \includegraphics[width=\linewidth]{Images/Kubernetes-service}
   \captionof{figure}{I servizi in Kubernetes}
 \end{center}
 La figura 4.3 mostra la funzionalità dei servizi all'interno di un cluster Kubernetes. Sono presenti tre tipi di pod, distinti dai colori giallo, verde, rosso. Un replication controller ha scalato tali pod per eseguire istanze su tutti i nodi disponibili. Ogni classe di pod è esposto ai clients attraverso un servizio, rappresentato dal cerchio colorato.\\
@@ -254,14 +285,13 @@ Supponendo che ogni pod abbia una label della forma \textit{color=value}, il suo
 Quando un client raggiunge il servizio rosso, la richiesta viene inoltrata a un qualsiasi pod che abbia la label \textit{color=red}. Se viene aggiunto un nuovo pod in seguito ad uno scaling, esso viene immediatamente rilevato dal servizio, in virtù della label e del selettore corrispondente.\\ \\
 In Kubernetes i servizi possono essere configurati per esporre pods a client interni o esterni. Un servizio esposto internamente è raggiungibile attraverso l'indirizzo \textbf{ClusterIP}, ovvero l'indirizzo del cluster. Questi tipi di servizio sono ad esempio i pods Database, che non necessitano di essere esposti esternamente. Invece quando un servizio necessita di essere raggiunto dall'esterno, è necessario esporre una porta specifica in ciascun nodo, chiamata \textbf{NodePort}. \\
 Negli ambienti cloud pubblici, Kubernetes può eseguire il servizio di bilanciamento del carico configurato automaticamente per il routing del traffico ai suoi nodi.
-\chapter{Comportamento}
-Kubernetes, come la maggior parte delle piattaforme distribuite, è composto da almeno un nodo master e nodi di lavoro multipli. In alcuni casi, per garantire alta disponibilità, i nodi master possono essere anche più di uno. Nella seguente immagine viene rappresentata l'architettura di Kubernetes con tutte le sue componenti, che verranno analizzate singolarmente.
 \begin{center}
-  \includegraphics[scale=0.5]{Images/Kubernetes-architecture}
+  \includegraphics[width=\linewidth]{Images/Kubernetes-architecture}
   \captionof{figure}{Componenti dell'architettura di Kubernetes}
 \end{center}
 \section{Nodo Master}
-Il nodo \textbf{master} è responsabile per l'esposizione dell' API (application program interface), per la pianificazione del deployment e la gestione dell'intero cluster. Attraverso l'esposizione dell'API fornisce all'utente un'interfaccia per poter interagire con il sistema. Concettualmente, all'interno del nodo master non ci dovrebbero essere container in esecuzione.\\
+Kubernetes, come la maggior parte delle piattaforme distribuite, è composto da almeno un nodo master e nodi di lavoro multipli. Il nodo \textbf{master} è responsabile per l'esposizione dell' API (application program interface), per la pianificazione del deployment e la gestione dell'intero cluster. Attraverso l'esposizione dell'API fornisce all'utente un'interfaccia per poter interagire con il sistema. Concettualmente, all'interno del nodo master non ci dovrebbero essere container in esecuzione. In alcuni casi, per garantire alta disponibilità, i nodi master possono essere anche più di uno.
+\\
 La definizione degli oggetti in Kubernetes, così come i pods, i Replica sets e i servizi sono un compito del nodo master. Sono progettati per essere liberamente accoppiati, estendibili e adattabili a un'ampia varietà di carichi di lavoro. L'API fornisce questa estensibilità ai componenti interni, nonché estensioni e container in esecuzione su Kubernetes.
 \begin{center}
   \includegraphics[scale=0.5]{Images/Kubernetes-master}
@@ -284,7 +314,6 @@ Lo scheduler è responsabile di trovare un nodo corretto al quale assegnare un p
    \item \textbf{job} e \textbf{cron job}: gestiscono l'elaborazione in background
  \end{itemize}
 Questi controller comunicano con il server API per creare, aggiornare ed eliminare le risorse che gestiscono, come i pod e gli endpoint del servizio.\\
-\\
 Le applicazioni mission critical richiedono livelli più elevati di disponibilità delle risorse. Attraverso l'uso di un set di repliche, Kubernetes garantisce che un numero predefinito di pod sia in esecuzione tutto il tempo. Ma questi pods sono apolidi ed effimeri. È molto difficile eseguire carichi di lavoro con stato, come un cluster di database o un grande stack di dati, per i seguenti motivi:
 \begin{itemize}
   \item A ciascun pod viene assegnato un nome arbitrario in fase di runtime.
@@ -306,7 +335,7 @@ Node  è il cavallo di battaglia di Kubernetes, responsabile dell'esecuzione di 
 Un nodo può essere una macchina virtuale (VM) in esecuzione in un cloud o un server base metal all'interno del data center.
 I nodi workers possono essere molteplici all'interno di un cluster Kubernetes, e ciascuno di essi può avere un numero variabile di pod, mentre tutti possiedono tre principali componenti che permettono la corretta esecuzione dei container all'interno del nodo worker. Questi componenti sono \textit{kubelet}, \textit{kube-proxy} e \textit{container runtime}.
 \begin{center}
-  \includegraphics[scale=0.5]{Images/Kubernetes-workers}
+  \includegraphics[scale=0.47]{Images/Kubernetes-workers}
   \captionof{figure}{Componenti dei nodi workers}
 \end{center}
 \subsection{kubelet}
@@ -314,16 +343,31 @@ Kubelet è il principale servizio di un nodo worker, responsabile della comunica
 \subsection{kube-proxy}
 Kube-proxy è implementato come proxy di rete e bilanciamento del carico. Instrada il traffico al container appropriato in base al suo indirizzo IP e al numero di porta di una richiesta in arrivo. Esegue l'inoltro delle richieste ai relativi pod/containers tra le varie reti isolate all'interno del cluster.
 \begin{center}
-  \includegraphics[scale=0.55]{Images/Kubernetes-proxy}
-  \captionof{figure}{I servizi headless forniscono punti di connessione tra database e servizi di stato}
+  \includegraphics[scale=0.47]{Images/Kubernetes-proxy}
+  \captionof{figure}{Servizi headless con punti di connessione tra database e servizi di stato}
 \end{center}
 Come illustrato nella figura 5.4 è possibile utilizzare il \textbf{servizio headless} per dirigere i pods a servizi esterni, come cache, oggetti di archiviazione e database. Ciò funziona essenzialmente come un servizio ma senza la necessità di un kube-proxy o di un bilanciamento del carico. Una chiamata ad un servizio headless determina l'indirizzo IP del cluster che il servizio seleziona in modo specifico. In questo modo, è possibile utilizzare una logica personalizzata per selezionare l'indirizzo IP, bypassando la normale routine.
 \subsection{Container runtime}
 Container runtime è il software responsabile dell'esecuzione dei container all'interno del nodo. Dopo che un pod è schedulato sul nodo, il runtime estrae le immagini specificate dal pod dal registro. Quando un pod  termina, il runtime uccide i container che appartengono al pod. Kubernetes può comunicare con qualsiasi runtime container compatibile con OCI (Open Container Initiative), inclusi Docker e rkt.
 \subsection{Logging Layer}
 L'orchestratore fa frequentemente uso del logging come mezzo per raccogliere l'utilizzo delle risorse e le metriche delle prestazioni per i container su ciascun nodo, come CPU, memoria, file e utilizzo della rete. Cloud Native Computing Foundation produce quello che definisce un livello di registrazione unificato da utilizzare con Kubernetes o altri orchestratori, chiamato \textbf{Fluentd}. Questo componente produce metriche che il controller master di Kubernetes deve tenere traccia delle risorse cluster disponibili e dello stato dell'infrastruttura generale.
-\chapter{Funzioni}
-\chapter{Aspetti analitici}
+\chapter{Aspetti analitici e criticità}
+\section{Deployment patterns}
+Come introdotto nel Capitolo 2, la rapida crescita di Kubernetes nell'ecosistema dei container ha portato a molteplici modelli di deployment, che vanno dal fai-da-te alle forme di cluster completamente automatizzate e gestite. Indipendentemente dal modo in cui viene distribuito, gli sviluppatori e i team di sviluppo seguono un flusso di lavoro standardizzato e coerente per la gestione del ciclo di vita delle applicazioni containerizzate. Questo è uno dei vantaggi chiave di Kubernetes.
+I clienti che utilizzano Kubernetes hanno accesso a un ampio spettro di modelli di deployment disponibili, ognuno con i suoi vantaggi e svantaggi:
+\begin{itemize}
+  \item  \textbf{Deployment personalizzato}: una distribuzione personalizzata offre la massima scelta ai clienti tra un'ampia gamma di ambienti di distribuzione target, configurazioni della macchina, sistemi operativi, back-end di archiviazione, plug-in di rete e configurazioni ad alta disponibilità. Pur offrendo scelta e controllo, la responsabilità di mantenere i cluster spetta esclusivamente al cliente.
+  Nelle distribuzioni personalizzate, i clienti possiedono l'intero stack che alimenta il cluster di produzione. Dalle risorse di calcolo, di rete e di archiviazione sottostanti al registro delle immagini, l'utente è responsabile dell'installazione, della configurazione e della gestione dell'intero stack. Nel caso del cloud pubblico, alcune risorse, come macchine virtuali (VM) e dispositivi di archiviazione a blocchi, sono gestite dal provider IaaS.
+  \item \textbf{Managed Kubernetes Cluster}: le piattaforme gestite di Kubernetes offrono il meglio di entrambi i mondi: la scelta dell'infrastruttura combinata con cluster privi di manutenzione. Le organizzazioni che non dispongono delle competenze necessarie per configurare, configurare e gestire distribuzioni su larga scala possono optare per piattaforme gestite di Kubernetes. Poiché i fornitori di piattaforme gestiscono da remoto i cluster, gli utenti possono concentrarsi sullo sviluppo dell'applicazione invece di mantenere l'infrastruttura del container.Rispetto alle distribuzioni self-hosted, le offerte gestite di Kubernetes sono più costose, in quanto vanno aggiunti i costi dell'infrastruttura e di gestione del cluster. Ma il vantaggio di aggiornamenti periodici, patching, servizi di sicurezza e monitoraggio delle piattaforme gestite di Kubernetes può compensare il costo a lungo termine.
+  \item \textbf{Container as a Service}: se confrontato con altri modelli di implementazione, CaaS fornisce il percorso più breve per Kubernetes. I clienti possono avere un cluster completamente configurato, altamente disponibile e sicuro in pochi minuti. CaaS è dotato di funzionalità come monitoraggio integrato, registrazione, auto-scaling, auto-aggiornamento e auto-health. In questo modo i team DevOps non devono occuparsi della gestione dei cluster,con risparmi a lungo termine sulla gestione dell'infrastruttura. Uno svantaggio è la mancanza di controllo. I provider di cloud potrebbero impiegare più tempo per aggiornare le versioni di Kubernetes con la probabilità di non supportare tutti i componenti aggiuntivi e le funzionalità. I clienti non possono scegliere il back-end di archiviazione.
+  \item \textbf{Platform as a Service}: mentre altri modelli sono orientati alle operazioni, PaaS è orientato agli sviluppatori e viene preferita da un'organizzazione che sta prendendo in considerazione un livello uniforme e coerente che nasconde la complessità dell'orchestrazione dei container e gestione dell'infrastruttura. Scalabilità, monitoraggio e logging sono integrati nella piattaforma, che possono essere configurati tramite API o console basate sul web. Sebbene PaaS riduca la complessità, manca di flessibilità. La mancanza di personalizzazione è uno dei limiti di queste piattaforme. Se confrontato con altri modelli di delivery, il modello di licenza PaaS lo rende leggermente costoso per gli utenti.
+
+\end{itemize}
+\newpage
+\begin{center}
+  \includegraphics[scale=0.7]{Images/Kubernetes-deployment}
+  \captionof{figure}{Confronto tra i diversi livelli di controllo, costi e funzionalità tra i vari deployment patterns}
+\end{center}
 \chapter{Stili architetturali simili o derivati}
 \bibliography{Bibliografia}
 \end{document}
