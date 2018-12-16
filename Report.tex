@@ -12,9 +12,12 @@
 \usepackage{tabularx}
 \usepackage{makecell}
 \usepackage{fancyhdr}
+\usepackage[table,xcdraw]{xcolor}
 \usepackage[font=small,labelfont=bf]{caption}
 \linespread{1.2}
 \textwidth=450pt\oddsidemargin=0pt
+\newcolumntype{b}{X}
+\newcolumntype{s}{>{\hsize=.5\hsize}X}
 \begin{document}
 \begin{titlepage}
 \vspace{15mm}
@@ -36,13 +39,22 @@
 \end{center}
 \end{titlepage}
 \tableofcontents
-\chapter{Descrizione del sistema}
+\chapter{Introduzione}
+\section{Cos'è la Container Orchestration ?}
+Un \textbf{container} è una tecnologia per il deployment di sistemi distribuiti, una forma di server virtualizzato a livello di sistema operativo. Esso è un insieme di processi isolati dal resto del sistema, che eseguono un’immagine distinta contenente tutti i file necessari per supportare tali processi. Offrendo un’immagine che contiene tutte le dipendenze di un’applicazione, la containerizzazione offre portabilità e coerenza nel passaggio dallo sviluppo al testing, fino alla produzione.\\
+\\
+Come fare quando esistono più container ?\\È necessaria un'\textbf{orchestrazione di container}.\\
+\\
+L'orchestrazione di container è un processo che permette di distribuire una molteplicità di container per poter implementare un'applicazione. Infatti nel development moderno le applicazioni non sono più monolitiche, ma sono invece composte da dozzine o centinaia di componenti containerizzati liberamente accoppiati che devono lavorare insieme per consentire a una determinata app di funzionare come progettata. L'orchestrazione dei container fa riferimento al processo di organizzazione del lavoro dei singoli componenti e dei livelli dell'applicazione.\\
+Tool di orchestrazione di container, quali Kubernetes, Apache Mesos e Docker Swarm, consentono agli utenti di guidare il deployment, gli aggiornamenti automatici e il monitoraggio di container.
+\newpage
+\section{Descrizione del sistema}
 \begin{center}
   \includegraphics[scale = 0.9]{Images/kubernetesLogo}
 \end{center}
 Kubernetes è un sistema open source per la gestione di applicazioni containerizzate tra più host; fornisce un meccanismo per il deployment, la manutenzione e lo scaling di applicazioni. È stato inizialmente sviluppato dal team di Google, per poi passare nel 2015 sotto il controllo del \textit{Cloud Native Computing Foundation (CNCF)}, che attualmente lo supporta.\\ Al giorno d'oggi è uno dei sistemi di orchestrazione per applicazioni conteinerizzate più utilizzato in assoluto, con una vastità di utenti, partners e una comunità di development attiva. Non a caso tre dei quattro maggior providers di servizi Cloud - Microsoft, IBM e Google - offrono piattaforme di Container as a Service (CaaS) basate su Kubernetes. I servizi che Kubernetes mette a disposizione sono molteplici: fornisce un ambiente la gestione di container, microservizi e piattaforme cloud. Inoltre organizza l'infrastruttura di rete e di archiviazione per conto dell'utente.\\
 In generale un sistema distribuito necessita di più componenti per il corretto funzionamento, alcune open source e altre commerciali; invece Kubernetes da solo fornisce uno scenario in cui le componenti lavorano insieme, andando così a formare un unico componente combinando la semplicità del Platform as a Service (PaaS) con la flessibilità dell'Infrastructure as a Service (IaaS).\\
-L'orchestrazione di container ha avuto un profondo impatto in ogni aspetto del software development e deployment moderno; in particolare ha influenzato l'architettura del Platform as a Service, fornendo un aperto ed efficiente modello per il packaging, deployment, isolamento, scaling e rolling upgrade. Kubernetes svolgerà un ruolo cruciale nell'utilizzo di container da parte di imprese e start-up emergenti.
+L'orchestrazione di container ha avuto un profondo impatto in ogni aspetto del software development e deployment moderno; in particolare ha influenzato l'architettura del Platform as a Service, fornendo un aperto ed efficiente modello per il packaging, deployment, isolamento, scaling e rolling upgrade. Kubernetes svolge un ruolo cruciale nell'utilizzo di container da parte di imprese e start-up emergenti.
 \\L'oggetto di questo report è di studiare tutto ciò che riguarda e circonda l'architettura di Kubernetes.
 \chapter{Descrizione dell'architettura}
 \section{Scopo}
@@ -52,12 +64,12 @@ Kubernetes, come introdotto nel Capitolo 1, è un sistema di orchestrazione di c
 \item \textbf{Deployment}: gestisce la distribuzione di applicazioni assegnando ai nodi del cluster ciascuna istanza dell'applicazione. Il deployment in Kubernetes può essere eseguito in una varietà di ambienti con pattern differenti, ed esistono appunto diversi modelli, quali:
 \begin{itemize}
   \item Container as a Service (CaaS);
-  \item Public Cloud - Infrastructure as a Service (IaaS);
+  \item Platform as a Service (PaaS);
   \item Utilizzo on-premises all'interno di data center;
-  \item Deployment ibrido
+  \item Deployment personalizzato
 \end{itemize}
 \item \textbf{Scaling}: permette di ridimensionare l'applicazione a seconda delle esigenze dell'utente, andando a modificare le dimensioni del cluster e il numero di repliche dei pod. Un \textbf{pod} è il più piccolo oggetto deployabile nel modello a oggetti di Kubernetes e può incapsulare un singolo container o più container che necessitano di lavorare insieme.
-\item \textbf{Management}: fornisce un'interfaccia per la gestione dei cluster e delle applicazioni containerizzate. Un cluster di Kubernetes viene ospitato e gestito da un venditore commerciale, quali ad esempio Google Container Engine (GKE), Amazon EC2 Container Service e Azure Container Service di Microsoft, che offrono servizi di CaaS nel cloud pubblico. Molti utenti hanno iniziato ad usare Kubernetes attraverso Google Container Engine, essendo uno dei primi servizi di gestione di Kubernetes nel mercato.
+\item \textbf{Management}: fornisce un'interfaccia per la gestione dei cluster e delle applicazioni containerizzate. Un cluster di Kubernetes viene ospitato e gestito da un venditore commerciale, quali ad esempio Google Container Engine (GKE). Molti utenti hanno iniziato ad usare Kubernetes attraverso Google Container Engine, essendo uno dei primi servizi di gestione di Kubernetes nel mercato.
 \end{itemize}
 \section{Contesto}
 Nella figura seguente è espresso il \textit{system context diagram} di Kubernetes, che definisce le relazioni tra esso e le entità esterne.
@@ -106,7 +118,6 @@ Di seguito viene spiegato ciascun livello.
 \newpage
 \subsection{Piattaforme}
 Kubernetes essendo una piattaforma cloud è compatibile con diversi providers a seconda delle necessità e dell'utilizzo. Di seguito sono riportate alcune soluzioni differenti a seconda del pattern di utilizzo.
-\subsubsection{Container Management, soluzioni in locale e PaaS}
 \begin{table}[ht]
   \small
   \begin{center}
@@ -117,97 +128,43 @@ Kubernetes essendo una piattaforma cloud è compatibile con diversi providers a 
     \textbf{AppsCode} (AppsCode)&Hosted, PaaS\\
     \multicolumn{2}{|X|}{\textit{È una piattaforma integrata per il deployment, testing e coding di app containerizzate. Permette il deployment su Google Cloud Platform e AWS.}}\\
     \hline
-    \textbf{Cloud Container Engine} (Huawei)&CaaS\\
-    \multicolumn{2}{|X|}{\textit{Servizio di containerizzazione scalabile ad alte prestazioni basato su Kubernetes}}\\
-    \hline
     \textbf{Giant Swarm} (Giant Swarm)&Hosted, on-premises\\
     \multicolumn{2}{|X|}{\textit{Una soluzione creare, distribuire e gestire servizi containerizzati con Kubernetes come componente principale}}\\
     \hline
     \textbf{Google Container Engine} (Google)&CaaS\\
     \multicolumn{2}{|X|}{\textit{Google Container Engine è un sistema di gestione e orchestrazione dei cluster che consente agli utenti di eseguire container sulla piattaforma Cloud di Google}}\\
     \hline
-    \textbf{OpenShift Container Platform} (RedHat)&PaaS, on-premises\\
+    \textbf{OpenShift Online} (RedHat)&PaaS, on-premises\\
     \multicolumn{2}{|X|}{\textit{Una piattaforma di applicazioni per container che può estendersi su più infrastrutture. È costruito usando la tecnologia Docker e Kubernetes.}}\\
     \hline
-    \textbf{OpenShift Online} (RedHat)&Hosted\\
-    \multicolumn{2}{|X|}{\textit{Versione hosted di OpenShift. Il funzionamento è il medesimo a quello di OpenShift Container Platform}}\\
+    \textbf{Minikube} (Cloud Native Computing Foundation)&Deploy\\
+    \multicolumn{2}{|X|}{\textit{Una piattaforma di applicazioni per container che può estendersi su più infrastrutture. È costruito usando la tecnologia Docker e Kubernetes.}}\\
     \hline
     \textbf{Platform9 Managed Kubernetes for Docker} (Platform9)&Hosted, on-premises\\
     \multicolumn{2}{|X|}{\textit{I clienti possono utilizzare il singolo pannello di Platform 9 per orchestrare e gestire i container insieme alle macchine virtuali. In pratica, è possibile orchestrare le VM utilizzando OpenStack e/o Kubernetes}}\\
     \hline
+    \textbf{Kubernetes Dashboard} (Cloud Native Computing Foundation)&Monitoring\\
+    \multicolumn{2}{|X|}{\textit{Fornisce un'interfaccia utente basata sul Web per cluster Kubernetes. Consente agli utenti di gestire le applicazioni in esecuzione nel cluster nonché di gestire il cluster stesso.}}\\
+    \hline
+    \textbf{Agile Stacks} (Cloud Native Computing Foundation)& IaaS\\
+    \multicolumn{2}{|X|}{\textit{It provides automation to deploy Kubernetes into VPC in public cloud}}\\
+    \hline
   \end{tabularx}
   \end{center}
 \end{table}
-\newpage
-\subsubsection{Tools per deployment e controllo di clusters Kubernetes}
-\begin{table}[ht]
-\small
-\centering
-\begin{tabularx}{\textwidth}{|lr|}
-\hline
-\textbf{Prodotto} (compagnia) & \textbf{Categoria}\\
-\hline
-\textbf{AppFormix} (AppFormix)&Monitoring\\
-\multicolumn{2}{|X|}{\textit{Fornisce metriche e analisi per i container. Gli utenti possono gestire avvisi, o regole di orchestrazione per singoli pods o container. La dashboard può essere ulteriormente personalizzata e mappata nei propri progetti}}\\
-\hline
-\textbf{Bootkube} (CoreOS)&Deploy\\
-\multicolumn{2}{|X|}{\textit{Uno strumento di supporto per l'avvio di cluster Kubernetes autogestiti.}}\\
-\hline
-\textbf{ElasticBox ElasticKube} (CenturyLink)&Deploy\\
-\multicolumn{2}{|X|}{\textit{Un servizio per pipeline di CI/CD, per la configurazione di tools di management e per il deployment di applicazioni cloud. Include ElasticKube, una piattaforma open source per Kubernetes che promuove il self-service per le applicazioni containerizzate.}}\\
-\hline
-\textbf{Kubernetes Dashboard} (Cloud Native Computing Foundation)&Monitor\\
-\multicolumn{2}{|X|}{\textit{Fornisce un'interfaccia utente basata sul Web per cluster Kubernetes. Consente agli utenti di gestire le applicazioni in esecuzione nel cluster nonché di gestire il cluster stesso.}}\\
-\hline
-\textbf{Minikube} (Cloud Native Computing Foundation)&Deploy\\
-\multicolumn{2}{|X|}{\textit{Minikube è un tool che permette di eseguie in locale Kubernetes, semplicemente eseguendolo all'interno di una VM del proprio pc. }}\\
-\hline
-\end{tabularx}
-\end{table}
-\newpage
-\subsubsection{Tool per integration}
-\begin{table}[ht]
-\small
-\centering
-\begin{tabularx}{\textwidth}{|l|}
-\hline
-\textbf{Prodotto} (compagnia) \\
-\hline
-\textbf{Apprenda} (Apprenda)\\
-\multicolumn{1}{|X|}{\textit{Fornisce PaaS private per le aziende che supportano l'hosting di container}}\\
-\hline
-\textbf{Crunchy PostgreSQLContainer Suite} (Crunchy Data)\\
-\multicolumn{1}{|X|}{\textit{Un set di container Docker e servizi Kubernetes "preconfezionato"; il Crunchy Container Suite permette ai team di eseguire e gestire PostgreSQL su ambienti basati su Kubernetes}}\\
-\hline
-\textbf{fabric8} (Red Hat)\\
-\multicolumn{1}{|X|}{\textit{Una piattaforma open-source per il DevOps e integrazione costruita con un set di microservizi eseguiti su Kubernetes e OpenShift V3. La sua continuos delivery è basata su Jenkins, Nexus e SonarQube}}\\
-\hline
-\textbf{Kubeflix} (Red Hat)\\
-\multicolumn{1}{|X|}{\textit{Integrazione di Kubernetes con i componenti open source di Netflix, quali Hystrix, Turbine e Ribbon}}\\
-\hline
-\textbf{NetScaler CPX} (Citrix)\\
-\multicolumn{1}{|X|}{\textit{Sistema di bialnciamento della containerizzazione in Docker che può essere supportata on-premises o in ambienti multi-cloud. NetScaler CPX si integra con Kubernetes al fine di bilanciare applicazione containerizzate all'interno di cluster. Nell'ambiente di Kubernetes, NetScaler CPX rimpiazza kube-proxy nei minion e bilancia il carico nei pod. }}\\
-\hline
-\end{tabularx}
-\end{table}
-\newpage
-\subsection{Concorrenti}
-Tra i tool concorrenti a Kubernetes che offrono un servizio di orchestrazione di container abbiamo \textbf{Docker Swarm} e \textbf{Marathon}. Marathon è una piattaforma di orchestrazione di applicazioni e servizi per Apache Mesos.\\
-Docker Swarm invece, che è integrato in Docker come \textit{Swarm Mode}, è un orchestratore per i container Docker. Confrontando Docker Swarm con Kubernetes, emerge che quest'ultimo è un tool molto più efficiente, in quanto offre una maggiore scalabilità e automazione. Inoltre Kubernetes possiede delle proprie librerie per il monitoraggio e i logging; ciò viene a mancare in Docker Swarm, che deve ricorrere ad applicazioni di terze parti per sopperire a queste features.
-Kubernetes supera i vincoli imposti da Docker e Docker API per il deployment, e per questo è maggiormente utilizzato. In Kubernetes se un nodo fallisce, esso viene rimpiazzato così velocemente da non accorgersi, a meno che non si esegua una dettagliata risoluzione dei problemi.
 \chapter{Drivers architetturali}
 Kubernetes, come si può capire dal capitolo precedente, è progettato secondo i principi di scalabilità, disponibilità e sicurezza, nonchè fornisce una distribuzione del carico di lavoro tra le risorse disponibili. Questo capitolo metterà in evidenza alcuni dei requisiti non funzionali di Kubernetes.
 \section{Scalabilità}
 Le applicazioni sono eseguite in Kubernetes come microservizi. Tali microservizi sono composti da più container raggruppati in \textbf{pods}. Ciascun container è progettato per eseguire solamente un unico task.\\
 I pods possono essere composti da container con o senza stato (stateless/stateful). I pods senza stato possono essere scalati facilmente quando necessario anche attraverso l'auto-scaling dinamico.\\
-Dalla versione 1.4 Kubernetes supporta l'auto-scaling orizzontale dei pod, che scala autmaticamente il numero di pod in repliche controllate basate sull'utilizzo della CPU. La versione di Kubernetes ospitata da Google Cloud supporta l'auto-scaling di cluster. Quando un nuovo pod viene scalato tra tutti i nodi disponibili, Kubernetes coordina l'infrastruttura sottostante per far si che ulteriori nodi vengano aggiunti al cluster. \\
+Dalla versione 1.4 Kubernetes supporta l'auto-scaling orizzontale dei pod, che scala automaticamente il numero di pod in repliche controllate basate sull'utilizzo della CPU. La versione di Kubernetes ospitata da Google Cloud supporta l'auto-scaling di cluster. Quando un nuovo pod viene scalato tra tutti i nodi disponibili, Kubernetes coordina l'infrastruttura sottostante per far si che ulteriori nodi vengano aggiunti al cluster. \\
   \begin{center}
-  \includegraphics[scale = 0.7]{Images/horizontal-pod-autoscaler}
+  \includegraphics[scale = 0.6]{Images/HorizontalAutoscaler}
   \captionof{figure}{Autoscaling orizzontale di un pod}
   \end{center}
 L'auto-scaling orizzontale è implementato come un loop di controllo, in cui periodicamente (con un valore predefinito di 30 secondi) il controller manager interroga l'utilizzo delle risorse rispetto alle metriche specificate in ciascuna definizione di \textit{HorizontalPodAutoscaler}.
 Nello specifico, il controller manager ottiene le metriche (ad esempio l'utilizzo di CPU) attraverso l'API apposita per le metriche; quindi se è settato un valore target di utilizzo, il controller calcola il valore di utilizzo come percentuale delle richieste alle risorse equivalenti contenute nei container di ciascun pod. Se invece è impostato un valore grezzo, il controller utilizza direttamente tale valore. Il controller quindi assume o la media di utilizzo o il valore grezzo, per produrre poi un rapporto usato per scalare il numero di repliche desiderate. Da sottolineare il fatto che se alcuni container all'interno dei pods non hanno il set di richieste di risorse rilevanti, l'utilizzo di CPU per quel dato pod non verrà definito e l'autoscaler non intraprenderà alcuna azione per tale metrica.\\
-Kubernetes supporta inolte lo scaling di applicazioni stateless come i cluster Cassandra e i set di repliche MongoDB, ovvero più in generale di workloads persistenti, quali i database NoSQL e i database relazionali (RDBMS).
+Kubernetes supporta inoltre lo scaling di applicazioni stateless come i cluster Cassandra e i set di repliche MongoDB, ovvero più in generale di workloads persistenti, quali i database NoSQL e i database relazionali (RDBMS).
 \section{Disponibilità}
 In kubernetes i carichi di lavoro richiedono la disponibilità sia a livello di infrastruttra che applicazione. Ad esempio, nei cluster a larga scala, tutto è soggetto ai guasti, il che rende necessaria un'elevata disponibilità per la produzione dei workloads.
 Mentre la maggior parte dei motori di orchestrazione di container offrono la disponibilità di applicazioni, Kubernetes è progettato per affrontare la disponibilità sia di applicazioni che di infrastrutture.\\
@@ -271,8 +228,8 @@ Kubernetes, come la maggior parte dei sistemi distribuiti, è progettato secondo
 Nel caso di Kubernetes, un singolo pod o un ReplicaSet può essere esposto a client interni o esterni attraverso servizi, che associano un set di pod secondo un criterio specifico. Quando viene creato un pod, viene assegnato un indirizzo IP accessibile solo all'interno del cluster. Ma non vi è alcuna garanzia che l'indirizzo IP del pod rimarrà invariato per tutto il suo ciclo di vita. Kubernetes può reallocare o re-instanziare i pod in fase di runtime, creando un nuovo indirizzo IP per il pod. Per compensare questa incertezza, i servizi assicurano che il traffico sia sempre indirizzato al pod appropriato all'interno del cluster, indipendentemente dal nodo su cui è pianificato.  Ogni servizio espone un indirizzo IP e può anche esporre un endpoint DNS, entrambi i quali non cambieranno mai. I consumatori interni o esterni che necessitano di comunicare con un set di pod utilizzeranno l'indirizzo IP del servizio o il suo endpoint DNS più noto. In questo modo, il servizio funge da colla per il collegamento di pod con altri pod.
 \\
 In Kubernetes qualsiasi oggetto API, incluso un nodo o un pod, può avere coppie chiave-valore ad esso associate o metadati aggiuntivi per identificare e raggruppare oggetti che condividono un attributo o una proprietà comune. Kubernetes si riferisce a queste coppie chiave-valore come etichette, in inglese \textbf{"labels"}. \\
-Un \textbf{selettore} è un tipo di criterio utilizzato per interrogare gli oggetti di Kubernetes che corrispondono a un valore di label. QUesta potente tecnica consente di avere un basso accoppiamento tra oggetti. Inoltre possono essere creati nuovi oggetti che corrispondono al valore indicato dal selettore. Labels e selettori formano il meccanismo principale di Kubernetes per identificare i componenti ai quali si applica un'operazione.\\
-Un \textbf{ReplicaSet} si basa su etichette e selettori per determinare quali pods saranno scalati. In fase di runtime i pod possono essere scalati attraerso i ReplicaSet garantendo così che ogni deployment abbia sempre il numero desiderato di pods. Ogni pod la cui etichetta corrisponde al selettore definito dal servizio verrà esposto il suo endpoint. Quando un'operazione di scaling viene avviata da un set di repliche, i nuovi pod creati da tale operazione inizieranno immediatamente a ricevere il traffico. Un servizio fornisce quindi il bilanciamento del carico di base instradando il traffico tra i pod di corrispondenza.
+Un \textbf{selettore} è un tipo di criterio utilizzato per interrogare gli oggetti di Kubernetes che corrispondono a un valore di label. Qeesta potente tecnica consente di avere un basso accoppiamento tra oggetti. Inoltre possono essere creati nuovi oggetti che corrispondono al valore indicato dal selettore. Labels e selettori formano il meccanismo principale di Kubernetes per identificare i componenti ai quali si applica un'operazione.\\
+Un \textbf{ReplicaSet} si basa su etichette e selettori per determinare quali pods saranno scalati. In fase di runtime i pod possono essere scalati attraverso i ReplicaSet garantendo così che ogni deployment abbia sempre il numero desiderato di pods. Ogni pod la cui etichetta corrisponde al selettore definito dal servizio verrà esposto il suo endpoint. Quando un' operazione di scaling viene avviata da un set di repliche, i nuovi pod creati da tale operazione inizieranno immediatamente a ricevere il traffico. Un servizio fornisce quindi il bilanciamento del carico di base instradando il traffico tra i pod di corrispondenza.
 \\
 Questa architettura fornisce un meccanismo flessibile e liberamente accoppiato per l'individuazione dei servizi. Infatti la decostruzione di un sistema in un insieme di servizi complementari disaccoppia le operazioni tra le varie parti. Questa astrazione aiuta a stabilire chiare relazioni tra i servizi, il suo ambiente sottostante e i consumatori di quel servizio.\\
 Creare chiare delineazioni può aiutare a isolare i problemi, ma permette inoltre di scalare ciascun servizio indipendentemente dagli altri. Questo tipo di progettazione orientata ai servizi è molto simile alla programmazione orientata agli oggetti.
@@ -351,8 +308,8 @@ Come illustrato nella figura 5.4 è possibile utilizzare il \textbf{servizio hea
 Container runtime è il software responsabile dell'esecuzione dei container all'interno del nodo. Dopo che un pod è schedulato sul nodo, il runtime estrae le immagini specificate dal pod dal registro. Quando un pod  termina, il runtime uccide i container che appartengono al pod. Kubernetes può comunicare con qualsiasi runtime container compatibile con OCI (Open Container Initiative), inclusi Docker e rkt.
 \subsection{Logging Layer}
 L'orchestratore fa frequentemente uso del logging come mezzo per raccogliere l'utilizzo delle risorse e le metriche delle prestazioni per i container su ciascun nodo, come CPU, memoria, file e utilizzo della rete. Cloud Native Computing Foundation produce quello che definisce un livello di registrazione unificato da utilizzare con Kubernetes o altri orchestratori, chiamato \textbf{Fluentd}. Questo componente produce metriche che il controller master di Kubernetes deve tenere traccia delle risorse cluster disponibili e dello stato dell'infrastruttura generale.
-\chapter{Aspetti analitici e criticità}
-\section{Deployment patterns}
+
+\chapter{Deployment patterns}
 Come introdotto nel Capitolo 2, la rapida crescita di Kubernetes nell'ecosistema dei container ha portato a molteplici modelli di deployment, che vanno dal fai-da-te alle forme di cluster completamente automatizzate e gestite. Indipendentemente dal modo in cui viene distribuito, gli sviluppatori e i team di sviluppo seguono un flusso di lavoro standardizzato e coerente per la gestione del ciclo di vita delle applicazioni containerizzate. Questo è uno dei vantaggi chiave di Kubernetes.
 I clienti che utilizzano Kubernetes hanno accesso a un ampio spettro di modelli di deployment disponibili, ognuno con i suoi vantaggi e svantaggi:
 \begin{itemize}
@@ -361,13 +318,97 @@ I clienti che utilizzano Kubernetes hanno accesso a un ampio spettro di modelli 
   \item \textbf{Managed Kubernetes Cluster}: le piattaforme gestite di Kubernetes offrono il meglio di entrambi i mondi: la scelta dell'infrastruttura combinata con cluster privi di manutenzione. Le organizzazioni che non dispongono delle competenze necessarie per configurare, configurare e gestire distribuzioni su larga scala possono optare per piattaforme gestite di Kubernetes. Poiché i fornitori di piattaforme gestiscono da remoto i cluster, gli utenti possono concentrarsi sullo sviluppo dell'applicazione invece di mantenere l'infrastruttura del container.Rispetto alle distribuzioni self-hosted, le offerte gestite di Kubernetes sono più costose, in quanto vanno aggiunti i costi dell'infrastruttura e di gestione del cluster. Ma il vantaggio di aggiornamenti periodici, patching, servizi di sicurezza e monitoraggio delle piattaforme gestite di Kubernetes può compensare il costo a lungo termine.
   \item \textbf{Container as a Service}: se confrontato con altri modelli di implementazione, CaaS fornisce il percorso più breve per Kubernetes. I clienti possono avere un cluster completamente configurato, altamente disponibile e sicuro in pochi minuti. CaaS è dotato di funzionalità come monitoraggio integrato, registrazione, auto-scaling, auto-aggiornamento e auto-health. In questo modo i team DevOps non devono occuparsi della gestione dei cluster,con risparmi a lungo termine sulla gestione dell'infrastruttura. Uno svantaggio è la mancanza di controllo. I provider di cloud potrebbero impiegare più tempo per aggiornare le versioni di Kubernetes con la probabilità di non supportare tutti i componenti aggiuntivi e le funzionalità. I clienti non possono scegliere il back-end di archiviazione.
   \item \textbf{Platform as a Service}: mentre altri modelli sono orientati alle operazioni, PaaS è orientato agli sviluppatori e viene preferita da un'organizzazione che sta prendendo in considerazione un livello uniforme e coerente che nasconde la complessità dell'orchestrazione dei container e gestione dell'infrastruttura. Scalabilità, monitoraggio e logging sono integrati nella piattaforma, che possono essere configurati tramite API o console basate sul web. Sebbene PaaS riduca la complessità, manca di flessibilità. La mancanza di personalizzazione è uno dei limiti di queste piattaforme. Se confrontato con altri modelli di delivery, il modello di licenza PaaS lo rende leggermente costoso per gli utenti.
-
 \end{itemize}
 \newpage
 \begin{center}
-  \includegraphics[scale=0.7]{Images/Kubernetes-deployment}
+  \includegraphics[width=\linewidth]{Images/Kubernetes-deployment}
   \captionof{figure}{Confronto tra i diversi livelli di controllo, costi e funzionalità tra i vari deployment patterns}
 \end{center}
-\chapter{Stili architetturali simili o derivati}
-\bibliography{Bibliografia}
+\chapter{Aspetti analitici e criticità}
+\section{Code Quality}
+La qualità del codice è stata analizzata attraverso Codebeat, uno strumento che valuta automaticamente la qualità del codice. Questo tool controlla la qualità del codice calcolando un insieme di metriche correlate alla qualità del software, all'estensibilità e alla manutenibilità. In particolare sono state valutate la complessità totale e la duplicazione di codice.\\
+\\
+Dal punto di vista della \textbf{duplicazione di codice}, il numero di duplicati nel codice è considerato una delle metriche più importanti quando si misura la qualità del codice in quanto può causare difficoltà durante la manutenzione, poiché cambiare un'istanza di codice richiederebbe la replica anche in altri casi. Dall'analisi di codebeat, in un particolare file chiamato \textit{api.pb.go} lo sviluppatore ha usato le stesse linee di codice in diverse funzioni; ciò significa che devono cambiare tutto il codice nelle funzioni corrispondenti ogni volta che devono modificare la logica.\\
+Per quanto riguarda la \textbf{complessità del codice}, l'elevato numero di complessità indica che il codice contiene troppa logica e probabilmente dovrebbe essere scomposto in elementi più piccoli. La complessità del codice può essere misurata utilizzando diverse metriche come il numero di argomenti e valori di ritorno in una funzione; e il numero di casi condizionali. Uno degli esempi di questo può essere visto nell'immagine seguente.
+\newpage
+In questo esempio, ci sono otto argomenti nella funzione \textit{AttachContainer} che potrebbe causare confusione quando si usa questa funzione.
+\begin{center}
+  \includegraphics[width=\linewidth]{Images/Kubernetes-codecomplexity}\\
+  \captionof{figure}{Esempio di complessità del codice}
+\end{center}
+\section{Utility tree}
+\begin{center}
+  \includegraphics[width=\linewidth]{Images/Kubernetes-Utilitytree}\\
+  \captionof{figure}{Utility tree di Kubernetes con priorità degli scenari}
+\end{center}
+Nella figura 6.2 è possibile osservare l'\textbf{utility tree} relativo a Kubernetes. In generale, l'utility tree, come dice appunto la parola utility, indica la bontà complessiva del sistema. Gli attributi di qualità costituiscono il secondo livello dell'albero essendo componenti di utilità, e corrispondono agli stessi drivers architetturali discussi nel capitolo 2.\\
+\\
+Parliamo ora in dettaglio di questo livello e dei livelli seguenti:
+\begin{itemize}
+  \item \textbf{Availability}: Questo driver può essere raggiunto grazie a
+  \begin{itemize}
+    \item \textit{Fault tolerance}: una proprietà molto importante che indica la tolleranza ai guasti, ovvero la capacità del sistema di supportare un'alta disponibilità di applicazioni e infrastrutture. Sia la fault tolerance rispetto alle applicazioni che alle infrastrutture possiede un'alta priorità in quanto si vuole garantire la massima efficienza.
+  \end{itemize}
+  \item \textbf{Security}: Questo driver può essere raggiunto grazie a
+  \begin{itemize}
+    \item \textit{Data confidentiality}: assicura che le transizioni siano sicure e l'autenticazione è sempre garantita. Questo task ha un'alta priorità, che per Kubernetes non è difficile da soddisfare in quanto adotta un'autenticazione a moduli molto sicuro.
+    \item \textit{Data integrity}: assicura che i dati e i contenuti relativi all'utente siano integri, proteggendoli da eventuali minacce. Questo task ha una priorità media e lo scenario è più difficile da soddisfare in quanto è necessario un utilizzo consapevole da parte dell'utente.
+  \end{itemize}
+  \item \textbf{Scalability}: Questo driver può essere raggiunto grazie a
+  \begin{itemize}
+    \item \textit{Load balancing}: il bilanciamento del carico è una qualità molto importante per Kubernetes, che viene soddisfatta grazie all'auto-scaling, che prende in considerazione la quantità d'utilizzo delle risorse del sistema, garantendo così che il sistema sia sempre bilanciato.
+  \end{itemize}
+  \item \textbf{Portability}: Questo driver può essere raggiunto grazie a
+  \begin{itemize}
+    \item \textit{Adaptability}:la capacità del sistema di adattarsi a nuove risorse disponibili sia sulla propria macchina o in cloud. In kubernetes questà qualità ha un'alta priorità ed è in costante sviluppo grazie a \textit{federation} con cui è possibile combinare più cluster in un deployment ibrido.
+    \item \textit{Installability}: qualità del software di essere facilmente configurabile ed installabile. Purtroppo Kubernetes supporta solo sistemi Linux ma non è ancora integrabile con Windows.
+  \end{itemize}
+\end{itemize}
+\chapter{Stili architetturali simili: Docker Swarm}
+Tra i tool concorrenti a Kubernetes che hanno un'architettura simile ed offrono un servizio di orchestrazione di container abbiamo \textbf{Docker Swarm} e \textbf{Marathon}. Marathon è una piattaforma di orchestrazione di applicazioni e servizi per Apache Mesos.
+Docker Swarm invece, che è integrato in Docker come \textit{Swarm Mode}, è un orchestratore per i container Docker. Docker Swarm e Kubernetes hanno scolpito e cementato le loro posizioni nell'ecosistema dei container, ed entrambi questi strumenti consentono di gestire un cluster di server su cui sono in esecuzione uno o più servizi, ma sebbene entrambe le piattaforme di orchestrazione open source forniscano molte delle stesse funzionalità, ci sono alcune differenze fondamentali tra il modo in cui queste due operano. Kubernetes supporta richieste più elevate con maggiore complessità, mentre Docker Swarm offre una soluzione semplice con cui è facile iniziare. Docker Swarm è stato molto popolare tra gli sviluppatori che preferiscono implementazioni rapide e semplicità.
+Kubernetes è un tool molto più efficiente, in quanto offre una maggiore scalabilità e automazione; inoltre possiede delle proprie librerie per il monitoraggio e i logging, e ciò viene a mancare in Docker Swarm, che deve ricorrere ad applicazioni di terze parti per sopperire a queste features.
+In Kubernetes se un nodo fallisce, esso viene rimpiazzato così velocemente da non accorgersi, a meno che non si esegua una dettagliata risoluzione dei problemi. Nella seguente tabella viene approfondita la "rivalità" tra Kubernetes e Docker Swarm.
+\begin{table}[ht]
+  \small
+  \centering
+  \begin{tabularx}{\textwidth}{sbb}
+  & \textbf{Kubernetes} &\textbf{Docker Swarm} \\ \hline
+Scalability &
+  {\scriptsize Supporta cluster con un massimo di 100 nodi, l 99\% di tutte le chiamate API viene restituito in meno di 1 secondo e il il 99\% dei pod e i relativi container hanno un tempo d'avvio entro 5 secondi.}&
+  {\scriptsize Testato per supportare 1000 nodi e 30.000 container senza alcuna differenza evidente tra il tempo di avvio del 1 ° o 30.000° nodo.}\\\hline
+Availability &
+  {\scriptsize Altamente disponibile. I pod sono distribuiti tra i nodi worker. I nodi guasti vengono rilevati automaticamente e gestiti per evitare tempi di inattività. }&
+  {\scriptsize Altamente disponibile. I container sono distribuiti tra i nodi Swarm per ridondanza e alta disponibilità. Lo Swarm Manager gestisce le risorse su larga scala e viene replicato per garantire che siano altamente disponibili.}\\\hline
+Load-balancing &
+{\scriptsize Kubernetes consente ai pod di essere definiti come un servizio. È quindi possibile impostare un bilanciamento del carico per accedere a questi servizi.} &
+{\scriptsize Lo swarm manager utilizza un bilanciamento del carico in ingresso per per esporre i servizi che vuole rendere visibili esternamente allo swarm. Inoltre utilizza anche il load-balancing internamente.}\\ \hline
+Auto-scaling &
+{\scriptsize Eccellente. Target come numero di pod e CPU-utilizzo-per-pod sono disponibili direttamente tramite l'API ed è sufficiente impostare questi parametri e K8 assegna automaticamente le risorse per mantenerli.}
+&
+{\scriptsize Non supporta l'auto-scaling, ma è possibile dichiarare il numero di attività che si desidera eseguire e Swarm Manager si adatterà per mantenere questo stato quando si scala in su o in giù.}\\ \hline
+Performance &
+{\scriptsize Kubernetes ha un'architettura più complessa e flessibile di Docker e offre maggiori garanzie. Putroppo ancora queste cose rallentano le prestazioni.}
+&
+ {\scriptsize Docker ha un'architettura più semplice ed in termini di prestazioni è più veloce. Secondo alcuni test è 5X più veloce di K8 in termini di start di un cluster di container e scalabilità.}\\ \hline
+Easy to use &
+{\scriptsize Kubernetes è più difficile da configurare e da utilizzare in quanto più complesso.}&
+{\scriptsize L'API di Docker Swarm condivide la CLI di Docker,inoltre è più indicato per implementazioni rapide e semplici}
+\end{tabularx}
+\end{table}
+\begin{thebibliography}{9}
+\bibitem{ecosystem}
+Alex Williams,\textit{The State of the Kubernetes Ecosystem},TheNewStack, 2017.
+\bibitem{deploymentpattern}
+Alex Williams, \textit{Kubernetes Deployment e Security Patterns}, TheNewStack, 2018.
+\bibitem{usecase}
+Alex Williams, Benjamin Ball, Gabriel Hoang Dinh, Lawrence Hecht,\textit{Use Cases for Kubernetes},TheNewStack.
+\bibitem{dockerswarm}
+Arsh Modak, Chaudhary, Paygude, Idate ,\textit{Techniques to Secure Data on Cloud: Docker Swarm or Kubernetes?}, 2018 2nd International Conference, IEEE.
+\bibitem{delft}
+Enreina Annisa Rizkiasri, Francisco Morales, Haris Suwignyo, Mohammad Riftadi, \textit{Kubernetes - Container Orchestration}, Delft Students on Software Architecture, 2018.
+\bibitem{opensourceapp}
+Kate Matsudaira, \textit{Scalable Web Architecture and Distributed Systems}, The architecture of Open Source Applications, vol 2.
+
+\end{thebibliography}
 \end{document}
