@@ -1,2 +1,2 @@
 # SWArch-Kubernetes
-Software Architecture report about Kubernetes application
+Software Architectures report about Kubernetes architecture.
